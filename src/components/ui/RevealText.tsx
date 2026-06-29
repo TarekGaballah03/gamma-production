@@ -9,7 +9,7 @@ interface RevealTextProps {
   children: React.ReactNode;
   className?: string;
   delay?: number;
-  tag?: "h1" | "h2" | "h3" | "h4" | "p" | "span";
+  tag?: "h1" | "h2" | "h3" | "h4" | "p" | "span" | "div";
   trigger?: string | Element;
 }
 
