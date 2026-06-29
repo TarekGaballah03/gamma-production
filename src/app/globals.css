@@ -1,0 +1,348 @@
+/* ─── Google Fonts ─────────────────────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap");
+
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Colors — strict monochromatic palette */
+  --color-black: #0a0a0a;
+  --color-white: #fafafa;
+  --color-cream: #f0ece4;
+  --color-grey-100: #e5e1da;
+  --color-grey-200: #c8c4bc;
+  --color-grey-400: #8a8680;
+  --color-grey-600: #4a4845;
+  --color-grey-800: #1e1c1a;
+
+  /* Typography */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+
+  /* Spacing scale */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 2rem;
+  --space-lg: 4rem;
+  --space-xl: 8rem;
+  --space-2xl: 12rem;
+
+  /* Transitions */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+  --duration-fast: 300ms;
+  --duration-normal: 600ms;
+  --duration-slow: 1000ms;
+  --duration-xslow: 1400ms;
+}
+
+/* ─── Base Reset ────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: auto; /* Lenis handles smooth scrolling */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-black);
+  color: var(--color-white);
+  overflow-x: hidden;
+  cursor: none; /* replaced by custom cursor */
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 3px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-grey-600);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-grey-400);
+}
+
+/* ─── Typography Scale ──────────────────────────────────────────── */
+h1,
+h2,
+h3,
+h4,
+h5 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* ─── Grain Texture Overlay ─────────────────────────────────────── */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9999;
+  animation: grain-drift 8s steps(10, end) infinite;
+}
+
+@keyframes grain-drift {
+  0%,
+  100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -3%); }
+  20% { transform: translate(3%, 2%); }
+  30% { transform: translate(-1%, 4%); }
+  40% { transform: translate(4%, -1%); }
+  50% { transform: translate(-3%, 2%); }
+  60% { transform: translate(1%, -4%); }
+  70% { transform: translate(-4%, 3%); }
+  80% { transform: translate(2%, 1%); }
+  90% { transform: translate(-1%, -2%); }
+}
+
+/* ─── Selection ─────────────────────────────────────────────────── */
+::selection {
+  background-color: var(--color-white);
+  color: var(--color-black);
+}
+
+/* ─── Focus Styles (Accessibility) ─────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-white);
+  outline-offset: 4px;
+}
+
+/* ─── Custom Cursor ─────────────────────────────────────────────── */
+.cursor-dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: var(--color-white);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  mix-blend-mode: difference;
+  transform: translate(-50%, -50%);
+  transition: width var(--duration-fast) var(--ease-out-expo),
+    height var(--duration-fast) var(--ease-out-expo);
+}
+
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(250, 250, 250, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+  transform: translate(-50%, -50%);
+  transition: width var(--duration-normal) var(--ease-out-expo),
+    height var(--duration-normal) var(--ease-out-expo),
+    border-color var(--duration-fast) var(--ease-out-expo);
+}
+
+.cursor-dot.is-hovering {
+  width: 4px;
+  height: 4px;
+}
+
+.cursor-ring.is-hovering {
+  width: 64px;
+  height: 64px;
+  border-color: var(--color-white);
+}
+
+/* ─── GSAP Clip-path Reveal Utility ────────────────────────────── */
+.clip-reveal {
+  clip-path: inset(0 100% 0 0);
+}
+
+.clip-reveal-bottom {
+  clip-path: inset(100% 0 0 0);
+}
+
+/* ─── Section Base ──────────────────────────────────────────────── */
+section {
+  position: relative;
+}
+
+.section-dark {
+  background-color: var(--color-black);
+  color: var(--color-white);
+}
+
+.section-light {
+  background-color: var(--color-cream);
+  color: var(--color-black);
+}
+
+/* ─── Preloader ─────────────────────────────────────────────────── */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background-color: var(--color-black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.preloader-counter {
+  position: absolute;
+  bottom: 3rem;
+  right: 3rem;
+  font-family: var(--font-display);
+  font-size: clamp(0.875rem, 1.5vw, 1.125rem);
+  font-weight: 300;
+  color: var(--color-grey-400);
+  letter-spacing: 0.1em;
+}
+
+/* ─── Marquee ───────────────────────────────────────────────────── */
+.marquee-track {
+  display: flex;
+  gap: 2rem;
+  white-space: nowrap;
+}
+
+.marquee-track-inner {
+  display: flex;
+  gap: 2rem;
+  animation: marquee-scroll 24s linear infinite;
+  will-change: transform;
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+
+/* ─── Overflow Hidden Wrapper (for GSAP clip reveals) ──────────── */
+.overflow-clip {
+  overflow: hidden;
+}
+
+/* ─── Image Hover Reveal ─────────────────────────────────────────── */
+.img-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* ─── Horizontal Rule ───────────────────────────────────────────── */
+.rule {
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  opacity: 0.12;
+}
+
+/* ─── Tailwind v4 Custom Utilities ──────────────────────────────── */
+@layer utilities {
+  /* Font families */
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  /* Fluid type scale */
+  .text-display-xl {
+    font-size: clamp(4rem, 10vw, 11rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .text-display-lg {
+    font-size: clamp(2.8rem, 6vw, 6rem);
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+  }
+  .text-display-md {
+    font-size: clamp(2rem, 4vw, 4rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .text-body-lg {
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+    line-height: 1.75;
+  }
+  .text-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  /* Section paddings */
+  .section-padding {
+    padding: clamp(5rem, 10vw, 10rem) clamp(1.5rem, 5vw, 5rem);
+  }
+  .section-padding-x {
+    padding-inline: clamp(1.5rem, 5vw, 5rem);
+  }
+
+  /* Hide visually but keep accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+/* ─── Translate utilities for Tailwind v4 (group-hover) ─────────── */
+.group:hover .group-hover\:translate-x-0 { transform: translateX(0); }
+.group:hover .group-hover\:translate-x-1 { transform: translateX(0.25rem); }
+.group:hover .group-hover\:translate-x-2 { transform: translateX(0.5rem); }
+.group:hover .group-hover\:text-black    { color: var(--color-black); }
+.group:hover .group-hover\:text-white    { color: var(--color-white); }
+.group:hover .group-hover\:opacity-70    { opacity: 0.7; }
+
+/* ─── Magnetic Button Base ──────────────────────────────────────── */
+.magnetic-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Premium focus ring (overrides default) ─────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
