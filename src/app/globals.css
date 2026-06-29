@@ -58,7 +58,11 @@ body {
   background-color: var(--color-black);
   color: var(--color-white);
   overflow-x: hidden;
-  cursor: none; /* replaced by custom cursor */
+}
+
+/* Hide default cursor only on frontend pages */
+.frontend-wrap, .frontend-wrap * {
+  cursor: none !important;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────── */

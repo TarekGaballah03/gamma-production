@@ -14,8 +14,10 @@ export default function FrontendLayout({
       <CustomCursor />
       
       <LenisProvider>
-        <Navbar />
-        {children}
+        <div className="frontend-wrap">
+          <Navbar />
+          {children}
+        </div>
       </LenisProvider>
     </>
   );
