@@ -101,6 +101,23 @@ export type Project = {
   tags: string[];
   featured: boolean;
   order: number;
+  mediaType?: "image" | "video";
+  videoUrl?: string;
+};
+
+export type BtsVideo = {
+  _key: string;
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnail?: SanityImage;
+};
+
+export type BehindTheSceneData = {
+  eyebrow: string;
+  headline: string;
+  subheadline?: string;
+  videos: BtsVideo[];
 };
 
 export type SiteSettings = {

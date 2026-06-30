@@ -46,7 +46,9 @@ export const workQuery = groq`
     description,
     tags,
     featured,
-    order
+    order,
+    mediaType,
+    videoUrl
   }
 `;
 
@@ -60,5 +62,20 @@ export const settingsQuery = groq`
     address,
     socialLinks,
     footerTagline
+  }
+`;
+
+export const behindTheSceneQuery = groq`
+  *[_type == "behindTheScene"][0] {
+    eyebrow,
+    headline,
+    subheadline,
+    videos[] {
+      _key,
+      title,
+      description,
+      videoUrl,
+      thumbnail
+    }
   }
 `;

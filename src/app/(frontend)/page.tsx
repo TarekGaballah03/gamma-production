@@ -7,11 +7,12 @@ import { MarqueeSection } from "@/components/sections/MarqueeSection";
 import { AboutSection } from "@/components/sections/AboutSection";
 import { ServicesSection } from "@/components/sections/ServicesSection";
 import { WorkSection } from "@/components/sections/WorkSection";
+import { BehindTheSceneSection } from "@/components/sections/BehindTheSceneSection";
 import { ContactSection } from "@/components/sections/ContactSection";
 import { Footer } from "@/components/layout/Footer";
-import type { HeroData, AboutData, ServicesData, Project, SiteSettings } from "@/types";
+import type { HeroData, AboutData, ServicesData, Project, SiteSettings, BehindTheSceneData } from "@/types";
 import { sanityFetch } from "@/sanity/client";
-import { heroQuery, aboutQuery, servicesQuery, workQuery, settingsQuery } from "@/sanity/queries";
+import { heroQuery, aboutQuery, servicesQuery, workQuery, settingsQuery, behindTheSceneQuery } from "@/sanity/queries";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -21,30 +22,29 @@ export default function Home() {
     services: ServicesData | null;
     work: Project[];
     settings: SiteSettings | null;
+    behindTheScene: BehindTheSceneData | null;
   }>({
     hero: null,
     about: null,
     services: null,
     work: [],
     settings: null,
+    behindTheScene: null,
   });
 
   useEffect(() => {
-    // In a real Server Component setup, we would fetch this in the page level
-    // and pass down as props. However, since we're using Lenis & GSAP which require
-    // "use client" everywhere, we fetch client-side or we could isolate the client logic.
-    // For this portfolio, we simulate the fetch for resilience (fallback data will show).
     async function loadData() {
       try {
-        const [hero, about, services, work, settings] = await Promise.all([
+        const [hero, about, services, work, settings, behindTheScene] = await Promise.all([
           sanityFetch<HeroData>(heroQuery).catch(() => null),
           sanityFetch<AboutData>(aboutQuery).catch(() => null),
           sanityFetch<ServicesData>(servicesQuery).catch(() => null),
           sanityFetch<Project[]>(workQuery).catch(() => []),
           sanityFetch<SiteSettings>(settingsQuery).catch(() => null),
+          sanityFetch<BehindTheSceneData>(behindTheSceneQuery).catch(() => null),
         ]);
 
-        setData({ hero, about, services, work, settings });
+        setData({ hero, about, services, work, settings, behindTheScene });
       } catch (err) {
         console.error("Sanity fetch failed, using fallbacks.", err);
       }
@@ -72,6 +72,8 @@ export default function Home() {
         {/* We pass dummy projects if none exist to demonstrate the grid */}
         <WorkSection projects={data.work.length > 0 ? data.work : DUMMY_PROJECTS} />
         
+        <BehindTheSceneSection data={data.behindTheScene} />
+
         <ContactSection />
         <Footer settings={data.settings} />
       </main>
@@ -90,6 +92,7 @@ const DUMMY_PROJECTS: Project[] = [
     tags: ["Video", "Direction"],
     featured: true,
     order: 1,
+    mediaType: "image",
     coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
   },
   {
@@ -102,6 +105,7 @@ const DUMMY_PROJECTS: Project[] = [
     tags: ["Photo", "Editorial"],
     featured: false,
     order: 2,
+    mediaType: "image",
     coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
   },
   {
@@ -114,6 +118,7 @@ const DUMMY_PROJECTS: Project[] = [
     tags: ["Design", "Branding"],
     featured: false,
     order: 3,
+    mediaType: "image",
     coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
   },
   {
@@ -126,6 +131,7 @@ const DUMMY_PROJECTS: Project[] = [
     tags: ["Social", "Campaign"],
     featured: false,
     order: 4,
+    mediaType: "image",
     coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
   },
 ];

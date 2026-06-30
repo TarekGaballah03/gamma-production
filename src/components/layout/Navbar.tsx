@@ -4,13 +4,29 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
 const NAV_LINKS = [
-  { href: "#about",    label: "About",    num: "01" },
-  { href: "#services", label: "Services", num: "02" },
-  { href: "#work",     label: "Work",     num: "03" },
-  { href: "#contact",  label: "Contact",  num: "04" },
+  { href: "#about",    label: "About",    shortLabel: "About",    num: "01" },
+  { href: "#services", label: "Services", shortLabel: "Services", num: "02" },
+  { href: "#work",     label: "Work",     shortLabel: "Work",     num: "03" },
+  { href: "#behind",   label: "Behind the Scene", shortLabel: "BTS", num: "04" },
+  { href: "#contact",  label: "Contact",  shortLabel: "Contact",  num: "05" },
 ];
+
+/** Smooth scroll to a hash section using GSAP ScrollTo */
+function scrollToSection(href: string, onDone?: () => void) {
+  const target = document.querySelector(href);
+  if (!target) return;
+
+  gsap.registerPlugin(ScrollToPlugin);
+  gsap.to(window, {
+    duration: 1.1,
+    scrollTo: { y: target, offsetY: 70 },
+    ease: "power3.inOut",
+    onComplete: onDone,
+  });
+}
 
 // ─── Logo mark SVG (inline for crisp blend-mode rendering) ──────
 function GammaLogo({ size = 36 }: { size?: number }) {
@@ -160,6 +176,20 @@ export function Navbar() {
 
   const closeMenu = () => setMenuOpen(false);
 
+  /** Handle anchor clicks with smooth scroll */
+  const handleAnchorClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      closeMenu();
+      // Small delay when closing mobile menu so animation can start
+      const delay = menuOpen ? 700 : 0;
+      setTimeout(() => scrollToSection(href), delay);
+    }
+  };
+
   return (
     <>
       {/* ── Main bar ──────────────────────────────────────────── */}
@@ -211,10 +241,16 @@ export function Navbar() {
         <nav
           aria-label="Primary navigation"
           className="hidden md:flex"
-          style={{ alignItems: "center", gap: "clamp(2rem, 3.5vw, 3.5rem)" }}
+          style={{ alignItems: "center", gap: "clamp(1.5rem, 2.5vw, 3rem)" }}
         >
-          {NAV_LINKS.map(({ href, label, num }) => (
-            <NavLink key={href} href={href} label={label} num={num} />
+          {NAV_LINKS.map(({ href, shortLabel, num }) => (
+            <NavLink
+              key={href}
+              href={href}
+              label={shortLabel}
+              num={num}
+              onClick={handleAnchorClick}
+            />
           ))}
         </nav>
 
@@ -223,6 +259,7 @@ export function Navbar() {
           {/* Desktop CTA */}
           <a
             href="#contact"
+            onClick={(e) => handleAnchorClick(e, "#contact")}
             className="hidden md:inline-flex group"
             aria-label="Get in touch"
             style={{
@@ -261,7 +298,7 @@ export function Navbar() {
               }}
               className="group-hover:text-black"
             >
-              Let's Talk
+              Let&apos;s Talk
             </span>
           </a>
 
@@ -275,7 +312,7 @@ export function Navbar() {
             style={{
               background: "none",
               border: "none",
-              cursor: "none",
+              cursor: "pointer",
               padding: "4px",
               display: "flex",
               flexDirection: "column",
@@ -346,7 +383,7 @@ export function Navbar() {
             <li key={href} style={{ overflow: "hidden", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBlock: "1.25rem" }}>
               <a
                 href={href}
-                onClick={closeMenu}
+                onClick={(e) => handleAnchorClick(e, href)}
                 style={{
                   display: "flex",
                   alignItems: "baseline",
@@ -371,7 +408,7 @@ export function Navbar() {
                 <span
                   style={{
                     fontFamily: "Cormorant Garamond, serif",
-                    fontSize: "clamp(3rem, 10vw, 5.5rem)",
+                    fontSize: "clamp(2.5rem, 8vw, 5rem)",
                     fontWeight: 300,
                     letterSpacing: "-0.02em",
                     lineHeight: 1,
@@ -405,7 +442,7 @@ export function Navbar() {
         {/* Mobile contact link */}
         <a
           href="#contact"
-          onClick={closeMenu}
+          onClick={(e) => handleAnchorClick(e, "#contact")}
           style={{
             position: "absolute",
             bottom: "2.5rem",
@@ -420,7 +457,7 @@ export function Navbar() {
             paddingBottom: "2px",
           }}
         >
-          Let's Talk →
+          Let&apos;s Talk →
         </a>
       </div>
     </>
@@ -428,7 +465,17 @@ export function Navbar() {
 }
 
 // ── Desktop nav link with animated underline ────────────────────
-function NavLink({ href, label, num }: { href: string; label: string; num: string }) {
+function NavLink({
+  href,
+  label,
+  num,
+  onClick,
+}: {
+  href: string;
+  label: string;
+  num: string;
+  onClick: (e: React.MouseEvent<HTMLAnchorElement>, href: string) => void;
+}) {
   const lineRef = useRef<HTMLSpanElement>(null);
 
   const onEnter = () => {
@@ -446,6 +493,7 @@ function NavLink({ href, label, num }: { href: string; label: string; num: strin
   return (
     <a
       href={href}
+      onClick={(e) => onClick(e, href)}
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
       style={{

@@ -6,10 +6,26 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { RevealText } from "@/components/ui/RevealText";
 import { ParallaxImage } from "@/components/ui/ParallaxImage";
 import type { Project } from "@/types";
-import { cn } from "@/lib/utils";
 
 interface WorkSectionProps {
   projects: Project[];
+}
+
+/** Convert any YouTube / Vimeo watch URL to an embed URL */
+function toEmbedUrl(url: string): string {
+  // YouTube: https://www.youtube.com/watch?v=ID  →  embed/ID
+  const ytMatch = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+  );
+  if (ytMatch) {
+    return `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
+  }
+  // Vimeo: https://vimeo.com/ID  →  player.vimeo.com/video/ID
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}?dnt=1`;
+  }
+  return url;
 }
 
 export function WorkSection({ projects }: WorkSectionProps) {
@@ -22,7 +38,7 @@ export function WorkSection({ projects }: WorkSectionProps) {
     const projectCards = sectionRef.current?.querySelectorAll(".project-card");
     if (!projectCards?.length) return;
 
-    projectCards.forEach((card, i) => {
+    projectCards.forEach((card) => {
       gsap.fromTo(
         card,
         { y: 100, opacity: 0 },
@@ -97,6 +113,7 @@ export function WorkSection({ projects }: WorkSectionProps) {
         >
           {projects.map((project, idx) => {
             const isHovered = hoveredProject === project._id;
+            const isVideo   = project.mediaType === "video" && !!project.videoUrl;
             
             // Layout variation: stagger odd items down slightly on desktop
             const isOdd = idx % 2 !== 0;
@@ -105,51 +122,97 @@ export function WorkSection({ projects }: WorkSectionProps) {
             return (
               <div
                 key={project._id}
-                className="project-card group cursor-none"
+                className="project-card group"
                 style={{ marginTop, willChange: "transform" }}
                 onMouseEnter={() => setHoveredProject(project._id)}
                 onMouseLeave={() => setHoveredProject(null)}
               >
-                {/* Image Wrapper */}
+                {/* Media Wrapper */}
                 <div
                   style={{
                     position: "relative",
-                    aspectRatio: project.featured ? "4/3" : "3/4",
+                    aspectRatio: isVideo ? "16/9" : project.featured ? "4/3" : "3/4",
                     overflow: "hidden",
                     marginBottom: "1.5rem",
                     backgroundColor: "var(--color-grey-200)",
                   }}
                 >
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      transition: "transform 0.8s cubic-bezier(0.16,1,0.3,1)",
-                      transform: isHovered ? "scale(1.05)" : "scale(1)",
-                    }}
-                  >
-                    {project.coverImage?.asset?._ref ? (
-                      <ParallaxImage
-                        image={project.coverImage}
-                        alt={project.title}
-                        className="w-full h-full"
-                        strength={8}
-                      />
-                    ) : (
-                       <div className="w-full h-full bg-[#e5e1da]" />
-                    )}
-                  </div>
-                  
-                  {/* Overlay for hover */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      backgroundColor: "rgba(10,10,10,0.2)",
-                      opacity: isHovered ? 1 : 0,
-                      transition: "opacity 0.6s ease",
-                    }}
-                  />
+                  {isVideo ? (
+                    /* ── Video embed ── */
+                    <iframe
+                      src={toEmbedUrl(project.videoUrl!)}
+                      title={project.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        border: "none",
+                      }}
+                      loading="lazy"
+                    />
+                  ) : (
+                    /* ── Image ── */
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        transition: "transform 0.8s cubic-bezier(0.16,1,0.3,1)",
+                        transform: isHovered ? "scale(1.05)" : "scale(1)",
+                      }}
+                    >
+                      {project.coverImage?.asset?._ref ? (
+                        <ParallaxImage
+                          image={project.coverImage}
+                          alt={project.title}
+                          className="w-full h-full"
+                          strength={8}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#e5e1da]" />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Overlay for hover (only on image cards) */}
+                  {!isVideo && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        backgroundColor: "rgba(10,10,10,0.2)",
+                        opacity: isHovered ? 1 : 0,
+                        transition: "opacity 0.6s ease",
+                        pointerEvents: "none",
+                      }}
+                    />
+                  )}
+
+                  {/* Video badge */}
+                  {isVideo && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "0.75rem",
+                        left: "0.75rem",
+                        background: "rgba(10,10,10,0.75)",
+                        backdropFilter: "blur(6px)",
+                        borderRadius: "999px",
+                        padding: "0.25rem 0.75rem",
+                        fontFamily: "DM Sans, sans-serif",
+                        fontSize: "0.6rem",
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        color: "white",
+                        zIndex: 2,
+                        pointerEvents: "none",
+                      }}
+                    >
+                      Video
+                    </div>
+                  )}
                 </div>
 
                 {/* Info */}
@@ -197,6 +260,7 @@ export function WorkSection({ projects }: WorkSectionProps) {
                       backgroundColor: isHovered ? "var(--color-black)" : "transparent",
                       color: isHovered ? "var(--color-white)" : "var(--color-black)",
                       transform: isHovered ? "rotate(-45deg)" : "rotate(0deg)",
+                      flexShrink: 0,
                     }}
                   >
                     <svg

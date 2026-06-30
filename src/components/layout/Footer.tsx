@@ -3,6 +3,7 @@ import type { SiteSettings } from "@/types";
 
 const SOCIAL_ICONS: Record<string, string> = {
   instagram: "IG",
+  facebook: "FB",
   tiktok: "TK",
   linkedin: "LI",
   youtube: "YT",
@@ -94,10 +95,10 @@ export function Footer({ settings }: FooterProps) {
             </p>
             <nav aria-label="Footer navigation">
               <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {["About", "Services", "Work", "Contact"].map((item) => (
+                {["About", "Services", "Work", "Behind the Scene", "Contact"].map((item) => (
                   <li key={item}>
                     <a
-                      href={`#${item.toLowerCase()}`}
+                      href={`#${item === "Behind the Scene" ? "behind" : item.toLowerCase()}`}
                       style={{
                         fontFamily: "Cormorant Garamond, serif",
                         fontSize: "1.1rem",

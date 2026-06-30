@@ -60,9 +60,11 @@ body {
   overflow-x: hidden;
 }
 
-/* Hide default cursor only on frontend pages */
-.frontend-wrap, .frontend-wrap * {
-  cursor: none !important;
+/* Hide default cursor only on desktop pointer devices (not touch/mobile) */
+@media (pointer: fine) {
+  .frontend-wrap, .frontend-wrap * {
+    cursor: none !important;
+  }
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────── */
@@ -138,49 +140,58 @@ p {
   outline-offset: 4px;
 }
 
-/* ─── Custom Cursor ─────────────────────────────────────────────── */
-.cursor-dot {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 8px;
-  height: 8px;
-  background: var(--color-white);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 10000;
-  mix-blend-mode: difference;
-  transform: translate(-50%, -50%);
-  transition: width var(--duration-fast) var(--ease-out-expo),
-    height var(--duration-fast) var(--ease-out-expo);
-}
-
+/* ─── Custom Cursor — desktop (pointer: fine) only ──────────────── */
+.cursor-dot,
 .cursor-ring {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(250, 250, 250, 0.5);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  mix-blend-mode: difference;
-  transform: translate(-50%, -50%);
-  transition: width var(--duration-normal) var(--ease-out-expo),
-    height var(--duration-normal) var(--ease-out-expo),
-    border-color var(--duration-fast) var(--ease-out-expo);
+  display: none;
 }
 
-.cursor-dot.is-hovering {
-  width: 4px;
-  height: 4px;
-}
+@media (pointer: fine) {
+  .cursor-dot {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    background: var(--color-white);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    mix-blend-mode: difference;
+    transform: translate(-50%, -50%);
+    transition: width var(--duration-fast) var(--ease-out-expo),
+      height var(--duration-fast) var(--ease-out-expo);
+  }
 
-.cursor-ring.is-hovering {
-  width: 64px;
-  height: 64px;
-  border-color: var(--color-white);
+  .cursor-ring {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(250, 250, 250, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    mix-blend-mode: difference;
+    transform: translate(-50%, -50%);
+    transition: width var(--duration-normal) var(--ease-out-expo),
+      height var(--duration-normal) var(--ease-out-expo),
+      border-color var(--duration-fast) var(--ease-out-expo);
+  }
+
+  .cursor-dot.is-hovering {
+    width: 4px;
+    height: 4px;
+  }
+
+  .cursor-ring.is-hovering {
+    width: 64px;
+    height: 64px;
+    border-color: var(--color-white);
+  }
 }
 
 /* ─── GSAP Clip-path Reveal Utility ────────────────────────────── */
@@ -228,6 +239,24 @@ section {
   font-weight: 300;
   color: var(--color-grey-400);
   letter-spacing: 0.1em;
+}
+
+/* Mobile: stack company name and counter vertically to prevent overlap */
+@media (max-width: 480px) {
+  .preloader-counter {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 1.5rem;
+    font-size: 0.8rem;
+  }
+  .preloader-brand {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    text-align: center;
+    bottom: 3.5rem !important;
+    font-size: 0.6rem !important;
+  }
 }
 
 /* ─── Marquee ───────────────────────────────────────────────────── */

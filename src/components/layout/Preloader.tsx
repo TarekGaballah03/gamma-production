@@ -112,6 +112,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
         {/* Company name */}
         <p
+          className="preloader-brand"
           style={{
             position: "absolute",
             bottom: "3rem",

@@ -214,6 +214,26 @@ export const projectSchema = defineType({
       options: { layout: "tags" },
     }),
     defineField({
+      name: "mediaType",
+      title: "Media Type",
+      type: "string",
+      options: {
+        list: [
+          { title: "Image", value: "image" },
+          { title: "Video (YouTube / Vimeo)", value: "video" },
+        ],
+        layout: "radio",
+      },
+      initialValue: "image",
+      description: "Choose whether this project displays an image or a video embed.",
+    }),
+    defineField({
+      name: "videoUrl",
+      title: "Video URL",
+      type: "url",
+      description: "YouTube or Vimeo URL (only used when Media Type is Video)",
+    }),
+    defineField({
       name: "featured",
       title: "Featured Project",
       type: "boolean",
@@ -308,5 +328,82 @@ export const settingsSchema = defineType({
   ],
   preview: {
     select: { title: "siteName" },
+  },
+});
+
+export const behindTheSceneSchema = defineType({
+  name: "behindTheScene",
+  title: "Behind the Scene",
+  type: "document",
+  icon: () => "🎞",
+  fields: [
+    defineField({
+      name: "eyebrow",
+      title: "Eyebrow Label",
+      type: "string",
+      initialValue: "Behind the Scene",
+    }),
+    defineField({
+      name: "headline",
+      title: "Section Headline",
+      type: "string",
+      initialValue: "The Making Of",
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "subheadline",
+      title: "Sub-headline / Description",
+      type: "text",
+      rows: 3,
+      description: "A short description shown below the headline",
+    }),
+    defineField({
+      name: "videos",
+      title: "BTS Videos",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          name: "btsVideo",
+          fields: [
+            {
+              name: "title",
+              type: "string",
+              title: "Video Title",
+              validation: (Rule: any) => Rule.required(),
+            },
+            {
+              name: "description",
+              type: "text",
+              title: "Short Description",
+              rows: 2,
+            },
+            {
+              name: "videoUrl",
+              type: "url",
+              title: "YouTube / Vimeo URL",
+              description: "e.g. https://www.youtube.com/watch?v=XXXX",
+              validation: (Rule: any) => Rule.required(),
+            },
+            {
+              name: "thumbnail",
+              type: "image",
+              title: "Thumbnail (optional override)",
+              options: { hotspot: true },
+              fields: [
+                { name: "alt", type: "string", title: "Alt Text" },
+              ],
+            },
+          ],
+          preview: {
+            select: { title: "title", subtitle: "videoUrl" },
+          },
+        },
+      ],
+      validation: (Rule) => Rule.min(1),
+    }),
+  ],
+  preview: {
+    select: { title: "headline" },
   },
 });

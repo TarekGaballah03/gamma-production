@@ -42,6 +42,7 @@ export const socialLinkObject = defineType({
       options: {
         list: [
           { title: "Instagram", value: "instagram" },
+          { title: "Facebook", value: "facebook" },
           { title: "TikTok", value: "tiktok" },
           { title: "LinkedIn", value: "linkedin" },
           { title: "YouTube", value: "youtube" },
