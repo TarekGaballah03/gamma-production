@@ -1,109 +1,440 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { gsap } from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { RevealText } from "@/components/ui/RevealText";
-import useEmblaCarousel from "embla-carousel-react";
+import { useVideoAutoplay } from "@/hooks/useVideoAutoplay";
 import type { BtsItem } from "@/types";
 
 interface BehindTheSceneSectionProps {
   items: BtsItem[];
 }
 
-/**
- * Renders a lazy-loading, auto-playing video element.
- * Video only starts playing (and loads) when intersecting the viewport.
- */
-function BtsVideoPlayer({ videoUrl, thumbnailUrl, title }: { videoUrl: string; thumbnailUrl?: string; title: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [inView, setInView] = useState(false);
+const AUTO_SLIDE_INTERVAL = 5000; // ms between auto-advances
 
-  useEffect(() => {
-    if (!videoRef.current) return;
-    
-    // Intersection Observer to lazy load the video
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setInView(true);
-            // Play video once in view
-            if (videoRef.current) {
-              videoRef.current.play().catch(() => {
-                // Ignore autoplay failures (some browsers block it until interaction)
-              });
-            }
-          } else {
-            // Pause video when out of view to save resources
-            if (videoRef.current) {
-              videoRef.current.pause();
-            }
-          }
-        });
-      },
-      { rootMargin: "200px" } // Start loading a bit before it enters the screen
-    );
-
-    observer.observe(videoRef.current);
-    return () => observer.disconnect();
-  }, []);
+// ─── Single BTS video card ────────────────────────────────────────
+function BtsVideoCard({
+  item,
+  isActive = true,
+}: {
+  item: BtsItem;
+  isActive?: boolean;
+}) {
+  // useVideoAutoplay handles Safari muted/playsInline imperatively
+  const videoRef = useVideoAutoplay<HTMLVideoElement>({
+    rootMargin: "200px",
+    threshold: 0.1,
+    pauseOnLeave: true,
+  });
 
   return (
-    <video
-      ref={videoRef}
-      className="object-cover w-full h-full"
-      src={inView ? videoUrl : undefined}
-      poster={thumbnailUrl}
-      title={title}
-      autoPlay
-      muted
-      loop
-      playsInline
-      controls={false}
-      style={{
-        width: "100%",
-        height: "100%",
-        display: "block",
-        outline: "none",
-        border: "none",
-        borderRadius: "4px", // Rounded corners as requested
-      }}
-    />
+    <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+      <div
+        style={{
+          position: "relative",
+          aspectRatio: "16/9",
+          background: "var(--color-grey-800)",
+          borderRadius: "4px",
+          overflow: "hidden",
+        }}
+      >
+        {item.videoUrl ? (
+          <video
+            ref={videoRef}
+            src={item.videoUrl}
+            poster={item.thumbnailUrl}
+            aria-label={item.title}
+            muted
+            playsInline
+            autoPlay
+            loop
+            preload="metadata"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              border: "none",
+              outline: "none",
+            }}
+          />
+        ) : item.thumbnailUrl ? (
+          // No video yet — show thumbnail
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.thumbnailUrl}
+            alt={item.title}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "DM Sans, sans-serif",
+                fontSize: "0.65rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "var(--color-grey-600)",
+              }}
+            >
+              Upload video in Sanity Studio
+            </span>
+          </div>
+        )}
+      </div>
+
+      <h3
+        style={{
+          fontFamily: "Cormorant Garamond, serif",
+          fontSize: "clamp(1.25rem, 2vw, 1.75rem)",
+          fontWeight: 400,
+          lineHeight: 1.2,
+          color: "white",
+        }}
+      >
+        {item.title}
+      </h3>
+    </div>
   );
 }
 
+// ─── Desktop GSAP Carousel ────────────────────────────────────────
+function DesktopCarousel({ items }: { items: BtsItem[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const goTo = useCallback(
+    (index: number) => {
+      const next = (index + items.length) % items.length;
+      setActiveIndex(next);
+
+      if (!trackRef.current) return;
+      const cards = trackRef.current.querySelectorAll<HTMLElement>(".bts-card");
+      // Slide track: each card takes 65vw + 2rem gap
+      const offset = next * (trackRef.current.getBoundingClientRect().width * 0.68 + 32);
+      gsap.to(trackRef.current, {
+        x: -offset,
+        duration: 0.75,
+        ease: "power3.inOut",
+      });
+    },
+    [items.length]
+  );
+
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") goTo(activeIndex + 1);
+      if (e.key === "ArrowLeft") goTo(activeIndex - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeIndex, goTo]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div
+      style={{ position: "relative" }}
+      role="region"
+      aria-label="Behind the scenes carousel"
+    >
+      {/* Clip wrapper so overflow is hidden */}
+      <div style={{ overflow: "hidden" }}>
+        <div
+          ref={trackRef}
+          style={{
+            display: "flex",
+            gap: "2rem",
+            willChange: "transform",
+          }}
+        >
+          {items.map((item, i) => (
+            <div
+              key={item._id}
+              className="bts-card"
+              onClick={() => goTo(i)}
+              style={{
+                flex: "0 0 65%",
+                maxWidth: "65%",
+                transition: "opacity 0.5s ease",
+                opacity: i === activeIndex ? 1 : 0.4,
+                cursor: i !== activeIndex ? "pointer" : "default",
+              }}
+            >
+              <BtsVideoCard item={item} isActive={i === activeIndex} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Navigation row */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          marginTop: "2rem",
+        }}
+      >
+        {/* Prev button */}
+        <button
+          onClick={() => goTo(activeIndex - 1)}
+          aria-label="Previous video"
+          style={{
+            width: "48px",
+            height: "48px",
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: "transparent",
+            color: "white",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.3s, border-color 0.3s",
+            flexShrink: 0,
+          }}
+          className="bts-nav-btn"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+
+        {/* Next button */}
+        <button
+          onClick={() => goTo(activeIndex + 1)}
+          aria-label="Next video"
+          style={{
+            width: "48px",
+            height: "48px",
+            borderRadius: "50%",
+            border: "1px solid rgba(255,255,255,0.2)",
+            background: "transparent",
+            color: "white",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background 0.3s, border-color 0.3s",
+            flexShrink: 0,
+          }}
+          className="bts-nav-btn"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+
+        {/* Counter */}
+        <span
+          style={{
+            fontFamily: "DM Sans, sans-serif",
+            fontSize: "0.65rem",
+            letterSpacing: "0.2em",
+            color: "var(--color-grey-400)",
+            marginLeft: "0.5rem",
+          }}
+        >
+          {String(activeIndex + 1).padStart(2, "0")} /{" "}
+          {String(items.length).padStart(2, "0")}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Mobile carousel with dots + auto-slide ───────────────────────
+function MobileCarousel({ items }: { items: BtsItem[] }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const touchStartX = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const goTo = useCallback(
+    (index: number, userInitiated = false) => {
+      if (isAnimating) return;
+      setIsAnimating(true);
+      const next = (index + items.length) % items.length;
+      setActiveIndex(next);
+      if (userInitiated && intervalRef.current) {
+        clearInterval(intervalRef.current);
+        // Restart auto-slide after user interaction
+        intervalRef.current = setInterval(() => {
+          setActiveIndex((prev) => (prev + 1) % items.length);
+        }, AUTO_SLIDE_INTERVAL);
+      }
+      setTimeout(() => setIsAnimating(false), 400);
+    },
+    [isAnimating, items.length]
+  );
+
+  // Auto-slide
+  useEffect(() => {
+    if (items.length < 2) return;
+    intervalRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % items.length);
+    }, AUTO_SLIDE_INTERVAL);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [items.length]);
+
+  // Touch swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 50) {
+      dx < 0 ? goTo(activeIndex + 1, true) : goTo(activeIndex - 1, true);
+    }
+  };
+
+  if (!items.length) return null;
+
+  return (
+    <div>
+      {/* Slides */}
+      <div
+        ref={containerRef}
+        style={{ position: "relative", overflow: "hidden" }}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {items.map((item, i) => (
+          <div
+            key={item._id}
+            aria-hidden={i !== activeIndex}
+            style={{
+              position: i === 0 ? "relative" : "absolute",
+              inset: i === 0 ? undefined : 0,
+              opacity: i === activeIndex ? 1 : 0,
+              transition: "opacity 0.4s ease",
+              pointerEvents: i === activeIndex ? "auto" : "none",
+            }}
+          >
+            <BtsVideoCard item={item} isActive={i === activeIndex} />
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination dots */}
+      {items.length > 1 && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "0.5rem",
+            marginTop: "1.5rem",
+          }}
+          role="tablist"
+          aria-label="Video pagination"
+        >
+          {items.map((_, i) => (
+            <button
+              key={i}
+              role="tab"
+              aria-selected={i === activeIndex}
+              aria-label={`Go to video ${i + 1}`}
+              onClick={() => goTo(i, true)}
+              style={{
+                width: i === activeIndex ? "24px" : "8px",
+                height: "8px",
+                borderRadius: "4px",
+                background: i === activeIndex
+                  ? "rgba(255,255,255,0.9)"
+                  : "rgba(255,255,255,0.25)",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                transition: "width 0.3s ease, background 0.3s ease",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Swipe hint */}
+      <p
+        style={{
+          marginTop: "0.75rem",
+          textAlign: "center",
+          fontFamily: "DM Sans, sans-serif",
+          fontSize: "0.6rem",
+          letterSpacing: "0.15em",
+          color: "var(--color-grey-600)",
+          textTransform: "uppercase",
+        }}
+      >
+        Swipe to explore
+      </p>
+    </div>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────
+function EmptyState() {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 560px), 1fr))",
+        gap: "clamp(2.5rem, 4vw, 4rem)",
+      }}
+    >
+      {[0, 1].map((i) => (
+        <div key={i} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+          <div
+            style={{
+              aspectRatio: "16/9",
+              background: "var(--color-grey-800)",
+              borderRadius: "4px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "DM Sans, sans-serif",
+                fontSize: "0.65rem",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "var(--color-grey-600)",
+              }}
+            >
+              Upload videos in Sanity Studio
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Section ──────────────────────────────────────────────────────
 export function BehindTheSceneSection({ items }: BehindTheSceneSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
-  const [emblaRef] = useEmblaCarousel({ loop: true, align: "center", breakpoints: { "(min-width: 768px)": { active: false } } });
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
-    
-    // Only animate grid cards on desktop
-    const cards = cardsRef.current?.querySelectorAll(".bts-desktop-card");
-    if (!cards?.length) return;
-
-    cards.forEach((card, i) => {
-      gsap.fromTo(
-        card,
-        { y: 80, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          ease: "power3.out",
-          delay: (i % 2) * 0.12,
-          scrollTrigger: {
-            trigger: card,
-            start: "top 88%",
-            toggleActions: "play none none none",
-          },
-        }
-      );
-    });
-  }, [items]);
+  }, []);
 
   return (
     <section
@@ -111,12 +442,12 @@ export function BehindTheSceneSection({ items }: BehindTheSceneSectionProps) {
       ref={sectionRef}
       className="section-dark"
       style={{
-        padding: "clamp(5rem, 10vw, 10rem) clamp(1.5rem, 5vw, 5rem)",
+        padding: "clamp(4rem, 10vw, 10rem) clamp(1.25rem, 5vw, 5rem)",
         position: "relative",
         overflow: "hidden",
       }}
     >
-      {/* Subtle decorative accent */}
+      {/* Decorative accent circles */}
       <div
         aria-hidden="true"
         style={{
@@ -170,19 +501,14 @@ export function BehindTheSceneSection({ items }: BehindTheSceneSectionProps) {
 
         <div
           style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: "2rem",
-            flexWrap: "wrap",
-            marginBottom: "clamp(3rem, 6vw, 5rem)",
+            marginBottom: "clamp(2.5rem, 5vw, 5rem)",
           }}
         >
           <RevealText tag="h2">
             <span
               style={{
                 fontFamily: "Cormorant Garamond, serif",
-                fontSize: "clamp(2.5rem, 5vw, 5rem)",
+                fontSize: "clamp(2.2rem, 5vw, 5rem)",
                 fontWeight: 300,
                 lineHeight: 1.05,
                 letterSpacing: "-0.025em",
@@ -195,143 +521,44 @@ export function BehindTheSceneSection({ items }: BehindTheSceneSectionProps) {
         </div>
 
         {/* Divider */}
-        <div className="rule" style={{ marginBottom: "clamp(3rem, 6vw, 5rem)" }} />
+        <div className="rule" style={{ marginBottom: "clamp(2.5rem, 5vw, 5rem)" }} />
 
         {items.length > 0 ? (
           <>
-            {/* Desktop Grid View */}
-            <div
-              ref={cardsRef}
-              className="hidden md:grid"
-              style={{
-                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 560px), 1fr))",
-                gap: "clamp(2.5rem, 4vw, 4rem)",
-              }}
-            >
-              {items.map((item) => (
-                <div key={item._id} className="bts-desktop-card" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                  <div
-                    style={{
-                      position: "relative",
-                      aspectRatio: "16/9",
-                      background: "var(--color-grey-800)",
-                      borderRadius: "4px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <BtsVideoPlayer videoUrl={item.videoUrl} thumbnailUrl={item.thumbnailUrl} title={item.title} />
-                  </div>
-                  <h3
-                    style={{
-                      fontFamily: "Cormorant Garamond, serif",
-                      fontSize: "clamp(1.3rem, 2vw, 1.75rem)",
-                      fontWeight: 400,
-                      lineHeight: 1.2,
-                      color: "white",
-                    }}
-                  >
-                    {item.title}
-                  </h3>
-                </div>
-              ))}
+            {/* Desktop GSAP carousel */}
+            <div className="bts-desktop">
+              <DesktopCarousel items={items} />
             </div>
 
-            {/* Mobile Embla Slider View */}
-            <div className="md:hidden">
-              <div className="embla" ref={emblaRef} style={{ overflow: "hidden" }}>
-                <div className="embla__container" style={{ display: "flex", touchAction: "pan-y" }}>
-                  {items.map((item) => (
-                    <div
-                      key={item._id}
-                      className="embla__slide"
-                      style={{
-                        flex: "0 0 90%", // Show 90% of a slide so the next one peeks
-                        minWidth: 0,
-                        paddingRight: "1rem",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "1rem",
-                      }}
-                    >
-                      <div
-                        style={{
-                          position: "relative",
-                          aspectRatio: "16/9",
-                          background: "var(--color-grey-800)",
-                          borderRadius: "4px",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <BtsVideoPlayer videoUrl={item.videoUrl} thumbnailUrl={item.thumbnailUrl} title={item.title} />
-                      </div>
-                      <h3
-                        style={{
-                          fontFamily: "Cormorant Garamond, serif",
-                          fontSize: "1.5rem",
-                          fontWeight: 400,
-                          lineHeight: 1.2,
-                          color: "white",
-                        }}
-                      >
-                        {item.title}
-                      </h3>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div
-                style={{
-                  marginTop: "1.5rem",
-                  textAlign: "center",
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: "0.65rem",
-                  letterSpacing: "0.15em",
-                  color: "var(--color-grey-600)",
-                  textTransform: "uppercase"
-                }}
-              >
-                Swipe to view more
-              </div>
+            {/* Mobile fade carousel */}
+            <div className="bts-mobile">
+              <MobileCarousel items={items} />
             </div>
           </>
         ) : (
-          /* Empty state */
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 560px), 1fr))",
-              gap: "clamp(2.5rem, 4vw, 4rem)",
-            }}
-          >
-            {[0, 1].map((i) => (
-              <div key={i} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                <div
-                  style={{
-                    aspectRatio: "16/9",
-                    background: "var(--color-grey-800)",
-                    borderRadius: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "DM Sans, sans-serif",
-                      fontSize: "0.65rem",
-                      letterSpacing: "0.2em",
-                      textTransform: "uppercase",
-                      color: "var(--color-grey-600)",
-                    }}
-                  >
-                    Upload videos in Sanity Studio
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <EmptyState />
         )}
       </div>
+
+      <style>{`
+        .bts-desktop { display: block; }
+        .bts-mobile  { display: none; }
+
+        @media (max-width: 767px) {
+          .bts-desktop { display: none; }
+          .bts-mobile  { display: block; }
+        }
+
+        /* Nav button hover */
+        .bts-nav-btn:hover {
+          background: rgba(255,255,255,0.1) !important;
+          border-color: rgba(255,255,255,0.5) !important;
+        }
+        .bts-nav-btn:focus-visible {
+          outline: 2px solid rgba(255,255,255,0.8);
+          outline-offset: 4px;
+        }
+      `}</style>
     </section>
   );
 }

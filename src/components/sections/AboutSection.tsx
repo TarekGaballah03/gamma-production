@@ -77,7 +77,7 @@ export function AboutSection({ data }: AboutSectionProps) {
       id="about"
       ref={sectionRef}
       className="section-light"
-      style={{ padding: "clamp(5rem, 10vw, 10rem) clamp(1.5rem, 5vw, 5rem)" }}
+      style={{ padding: "clamp(4rem, 10vw, 10rem) clamp(1.25rem, 5vw, 5rem)" }}
       aria-label="About Gamma Production"
     >
       <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
@@ -87,7 +87,7 @@ export function AboutSection({ data }: AboutSectionProps) {
             display: "flex",
             alignItems: "center",
             gap: "1rem",
-            marginBottom: "4rem",
+            marginBottom: "clamp(2rem, 4vw, 4rem)",
           }}
         >
           <span
@@ -116,11 +116,11 @@ export function AboutSection({ data }: AboutSectionProps) {
         >
           {/* Left: text */}
           <div>
-            <RevealText tag="h2" className="mb-10">
+            <RevealText tag="h2" className="about-headline-wrap">
               <span
                 style={{
                   fontFamily: "Cormorant Garamond, serif",
-                  fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
+                  fontSize: "clamp(2rem, 5vw, 4.5rem)",
                   fontWeight: 300,
                   lineHeight: 1.1,
                   letterSpacing: "-0.02em",
@@ -132,32 +132,39 @@ export function AboutSection({ data }: AboutSectionProps) {
             </RevealText>
 
             {/* Body text */}
-            {d.body.length > 0 ? (
-              <div
-                style={{
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: "clamp(0.9rem, 1.4vw, 1.05rem)",
-                  lineHeight: 1.8,
-                  color: "var(--color-grey-600)",
-                  marginBottom: "3rem",
-                }}
-              >
-                <PortableText value={d.body} />
-              </div>
-            ) : (
-              <p
-                style={{
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: "clamp(0.9rem, 1.4vw, 1.05rem)",
-                  lineHeight: 1.8,
-                  color: "var(--color-grey-600)",
-                  marginBottom: "3rem",
-                  maxWidth: "500px",
-                }}
-              >
-                Gamma Production is a creative studio established in 2023 with a clear mission: to produce visual work that doesn't just capture attention — it holds it. We blend technical expertise with artistic vision across every medium we touch.
-              </p>
-            )}
+            <div style={{ marginTop: "clamp(1.5rem, 3vw, 2.5rem)" }}>
+              {d.body.length > 0 ? (
+                <div
+                  style={{
+                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: "clamp(0.875rem, 1.4vw, 1.05rem)",
+                    lineHeight: 1.8,
+                    color: "var(--color-grey-600)",
+                    marginBottom: "clamp(2rem, 4vw, 3rem)",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  <PortableText value={d.body} />
+                </div>
+              ) : (
+                <p
+                  style={{
+                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: "clamp(0.875rem, 1.4vw, 1.05rem)",
+                    lineHeight: 1.8,
+                    color: "var(--color-grey-600)",
+                    marginBottom: "clamp(2rem, 4vw, 3rem)",
+                    maxWidth: "500px",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  Gamma Production is a creative studio established in 2023 with
+                  a clear mission: to produce visual work that doesn&apos;t just
+                  capture attention — it holds it. We blend technical expertise
+                  with artistic vision across every medium we touch.
+                </p>
+              )}
+            </div>
 
             {/* Stats */}
             <div
@@ -165,10 +172,11 @@ export function AboutSection({ data }: AboutSectionProps) {
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "2rem",
-                paddingTop: "2rem",
+                gap: "clamp(1rem, 2vw, 2rem)",
+                paddingTop: "clamp(1.5rem, 3vw, 2rem)",
                 borderTop: "1px solid rgba(10,10,10,0.1)",
               }}
+              className="about-stats"
             >
               {(d.stats || []).map((stat) => {
                 const { value, hasPlus } = parseStat(stat.number);
@@ -180,7 +188,7 @@ export function AboutSection({ data }: AboutSectionProps) {
                       data-plus={hasPlus}
                       style={{
                         fontFamily: "Cormorant Garamond, serif",
-                        fontSize: "clamp(2rem, 4vw, 3.5rem)",
+                        fontSize: "clamp(1.75rem, 4vw, 3.5rem)",
                         fontWeight: 300,
                         color: "var(--color-black)",
                         lineHeight: 1,
@@ -191,11 +199,12 @@ export function AboutSection({ data }: AboutSectionProps) {
                     <p
                       style={{
                         fontFamily: "DM Sans, sans-serif",
-                        fontSize: "0.7rem",
+                        fontSize: "clamp(0.6rem, 1vw, 0.7rem)",
                         letterSpacing: "0.15em",
                         textTransform: "uppercase",
                         color: "var(--color-grey-400)",
-                        marginTop: "0.5rem",
+                        marginTop: "0.4rem",
+                        wordBreak: "keep-all",
                       }}
                     >
                       {stat.label}
@@ -210,10 +219,10 @@ export function AboutSection({ data }: AboutSectionProps) {
               <p
                 style={{
                   fontFamily: "Cormorant Garamond, serif",
-                  fontSize: "1rem",
+                  fontSize: "clamp(0.875rem, 1.1vw, 1rem)",
                   fontStyle: "italic",
                   color: "var(--color-grey-400)",
-                  marginTop: "3rem",
+                  marginTop: "clamp(1.5rem, 3vw, 3rem)",
                   letterSpacing: "0.02em",
                 }}
               >
@@ -269,6 +278,15 @@ export function AboutSection({ data }: AboutSectionProps) {
         @media (max-width: 768px) {
           .about-grid {
             grid-template-columns: 1fr !important;
+          }
+          /* On mobile, image comes after text naturally */
+          .about-stats {
+            gap: 1rem !important;
+          }
+        }
+        @media (max-width: 400px) {
+          .about-stats {
+            gap: 0.75rem !important;
           }
         }
       `}</style>

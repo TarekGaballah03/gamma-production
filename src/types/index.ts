@@ -3,6 +3,7 @@ export type SanityImage = {
   asset: {
     _ref: string;
     _type: "reference";
+    url?: string;
   };
   hotspot?: {
     x: number;
@@ -94,6 +95,7 @@ export type Project = {
   _id: string;
   title: string;
   slug: { current: string };
+  client?: string;
   category: string;
   year: number;
   coverImage: SanityImage;
@@ -101,8 +103,12 @@ export type Project = {
   tags: string[];
   featured: boolean;
   order: number;
-  mediaType?: "image" | "video";
+  /** image | gallery | video */
+  mediaType?: "image" | "gallery" | "video";
+  /** For mediaType == "video": native video file URL resolved from Sanity asset */
   videoUrl?: string;
+  /** For mediaType == "gallery": array of images */
+  galleryImages?: SanityImage[];
 };
 
 export type BtsItem = {

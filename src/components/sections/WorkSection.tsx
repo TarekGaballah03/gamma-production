@@ -4,28 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { RevealText } from "@/components/ui/RevealText";
-import { ParallaxImage } from "@/components/ui/ParallaxImage";
+import { ProjectMediaDisplay } from "@/components/ui/ProjectMediaDisplay";
 import type { Project } from "@/types";
 
 interface WorkSectionProps {
   projects: Project[];
-}
-
-/** Convert any YouTube / Vimeo watch URL to an embed URL */
-function toEmbedUrl(url: string): string {
-  // YouTube: https://www.youtube.com/watch?v=ID  →  embed/ID
-  const ytMatch = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
-  );
-  if (ytMatch) {
-    return `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
-  }
-  // Vimeo: https://vimeo.com/ID  →  player.vimeo.com/video/ID
-  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-  if (vimeoMatch) {
-    return `https://player.vimeo.com/video/${vimeoMatch[1]}?dnt=1`;
-  }
-  return url;
 }
 
 export function WorkSection({ projects }: WorkSectionProps) {
@@ -57,12 +40,19 @@ export function WorkSection({ projects }: WorkSectionProps) {
     });
   }, [projects]);
 
+  /** Aspect ratio based on media type and featured status */
+  const getAspectRatio = (project: Project): string => {
+    if (project.mediaType === "video") return "16/9";
+    if (project.featured) return "4/3";
+    return "3/4";
+  };
+
   return (
     <section
       id="work"
       ref={sectionRef}
       className="section-light"
-      style={{ padding: "clamp(5rem, 10vw, 10rem) clamp(1.5rem, 5vw, 5rem)" }}
+      style={{ padding: "clamp(4rem, 10vw, 10rem) clamp(1.25rem, 5vw, 5rem)" }}
     >
       <div style={{ maxWidth: "1400px", margin: "0 auto" }}>
         {/* Header */}
@@ -71,7 +61,7 @@ export function WorkSection({ projects }: WorkSectionProps) {
             display: "flex",
             alignItems: "center",
             gap: "1rem",
-            marginBottom: "4rem",
+            marginBottom: "clamp(2rem, 4vw, 4rem)",
           }}
         >
           <span
@@ -92,7 +82,7 @@ export function WorkSection({ projects }: WorkSectionProps) {
           <span
             style={{
               fontFamily: "Cormorant Garamond, serif",
-              fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
+              fontSize: "clamp(2rem, 5vw, 4.5rem)",
               fontWeight: 300,
               lineHeight: 1.1,
               letterSpacing: "-0.02em",
@@ -104,26 +94,17 @@ export function WorkSection({ projects }: WorkSectionProps) {
         </RevealText>
 
         {/* Project Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 500px), 1fr))",
-            gap: "clamp(3rem, 5vw, 6rem) clamp(2rem, 4vw, 4rem)",
-          }}
-        >
+        <div className="work-grid">
           {projects.map((project, idx) => {
             const isHovered = hoveredProject === project._id;
-            const isVideo   = project.mediaType === "video" && !!project.videoUrl;
-            
-            // Layout variation: stagger odd items down slightly on desktop
             const isOdd = idx % 2 !== 0;
-            const marginTop = isOdd ? "clamp(0px, 10vw, 8rem)" : "0px";
+            const aspectRatio = getAspectRatio(project);
 
             return (
               <div
                 key={project._id}
-                className="project-card group"
-                style={{ marginTop, willChange: "transform" }}
+                className={`project-card group ${isOdd ? "work-card-offset" : ""}`}
+                style={{ willChange: "transform" }}
                 onMouseEnter={() => setHoveredProject(project._id)}
                 onMouseLeave={() => setHoveredProject(null)}
               >
@@ -131,54 +112,35 @@ export function WorkSection({ projects }: WorkSectionProps) {
                 <div
                   style={{
                     position: "relative",
-                    aspectRatio: isVideo ? "16/9" : project.featured ? "4/3" : "3/4",
+                    aspectRatio,
                     overflow: "hidden",
-                    marginBottom: "1.5rem",
+                    marginBottom: "1.25rem",
                     backgroundColor: "var(--color-grey-200)",
                   }}
+                  className="work-media-wrap"
                 >
-                  {isVideo ? (
-                    /* ── Video embed ── */
-                    <iframe
-                      src={toEmbedUrl(project.videoUrl!)}
-                      title={project.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        width: "100%",
-                        height: "100%",
-                        border: "none",
-                      }}
-                      loading="lazy"
-                    />
-                  ) : (
-                    /* ── Image ── */
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        transition: "transform 0.8s cubic-bezier(0.16,1,0.3,1)",
-                        transform: isHovered ? "scale(1.05)" : "scale(1)",
-                      }}
-                    >
-                      {project.coverImage?.asset?._ref ? (
-                        <ParallaxImage
-                          image={project.coverImage}
-                          alt={project.title}
-                          className="w-full h-full"
-                          strength={8}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-[#e5e1da]" />
-                      )}
-                    </div>
-                  )}
+                  {/* Scale wrapper for hover effect on image type only */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      transition:
+                        project.mediaType !== "video"
+                          ? "transform 0.8s cubic-bezier(0.16,1,0.3,1)"
+                          : undefined,
+                      transform:
+                        project.mediaType !== "video" && isHovered
+                          ? "scale(1.05)"
+                          : "scale(1)",
+                    }}
+                  >
+                    <ProjectMediaDisplay project={project} parallax={false} />
+                  </div>
 
-                  {/* Overlay for hover (only on image cards) */}
-                  {!isVideo && (
+                  {/* Hover overlay (image/gallery only) */}
+                  {project.mediaType !== "video" && (
                     <div
+                      aria-hidden="true"
                       style={{
                         position: "absolute",
                         inset: 0,
@@ -186,32 +148,9 @@ export function WorkSection({ projects }: WorkSectionProps) {
                         opacity: isHovered ? 1 : 0,
                         transition: "opacity 0.6s ease",
                         pointerEvents: "none",
+                        zIndex: 1,
                       }}
                     />
-                  )}
-
-                  {/* Video badge */}
-                  {isVideo && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "0.75rem",
-                        left: "0.75rem",
-                        background: "rgba(10,10,10,0.75)",
-                        backdropFilter: "blur(6px)",
-                        borderRadius: "999px",
-                        padding: "0.25rem 0.75rem",
-                        fontFamily: "DM Sans, sans-serif",
-                        fontSize: "0.6rem",
-                        letterSpacing: "0.15em",
-                        textTransform: "uppercase",
-                        color: "white",
-                        zIndex: 2,
-                        pointerEvents: "none",
-                      }}
-                    >
-                      Video
-                    </div>
                   )}
                 </div>
 
@@ -221,17 +160,21 @@ export function WorkSection({ projects }: WorkSectionProps) {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
+                    gap: "1rem",
                   }}
                 >
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <h3
                       style={{
                         fontFamily: "Cormorant Garamond, serif",
-                        fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
+                        fontSize: "clamp(1.4rem, 2.5vw, 2rem)",
                         fontWeight: 400,
                         lineHeight: 1.2,
                         color: "var(--color-black)",
                         marginBottom: "0.25rem",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {project.title}
@@ -239,15 +182,20 @@ export function WorkSection({ projects }: WorkSectionProps) {
                     <p
                       style={{
                         fontFamily: "DM Sans, sans-serif",
-                        fontSize: "0.8rem",
+                        fontSize: "0.75rem",
                         color: "var(--color-grey-600)",
                       }}
                     >
-                      {project.category} — {project.year}
+                      {project.client
+                        ? `${project.client} — `
+                        : ""}
+                      {project.category}
+                      {project.year ? ` — ${project.year}` : ""}
                     </p>
                   </div>
-                  
+
                   <div
+                    aria-hidden="true"
                     style={{
                       width: "40px",
                       height: "40px",
@@ -257,8 +205,12 @@ export function WorkSection({ projects }: WorkSectionProps) {
                       alignItems: "center",
                       justifyContent: "center",
                       transition: "all 0.4s cubic-bezier(0.16,1,0.3,1)",
-                      backgroundColor: isHovered ? "var(--color-black)" : "transparent",
-                      color: isHovered ? "var(--color-white)" : "var(--color-black)",
+                      backgroundColor: isHovered
+                        ? "var(--color-black)"
+                        : "transparent",
+                      color: isHovered
+                        ? "var(--color-white)"
+                        : "var(--color-black)",
                       transform: isHovered ? "rotate(-45deg)" : "rotate(0deg)",
                       flexShrink: 0,
                     }}
@@ -272,6 +224,7 @@ export function WorkSection({ projects }: WorkSectionProps) {
                       strokeWidth="1.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
+                      aria-hidden="true"
                     >
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
@@ -282,10 +235,30 @@ export function WorkSection({ projects }: WorkSectionProps) {
           })}
         </div>
       </div>
-      
+
       <style>{`
-        @media (max-width: 768px) {
-          .project-card {
+        /* Desktop: 2-col grid with stagger offset */
+        .work-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr));
+          gap: clamp(3rem, 5vw, 6rem) clamp(2rem, 4vw, 4rem);
+        }
+        @media (min-width: 768px) {
+          .work-card-offset {
+            margin-top: clamp(0px, 10vw, 8rem);
+          }
+        }
+        /* Gallery arrows: show on hover */
+        .work-media-wrap:hover .gallery-arrow {
+          opacity: 1 !important;
+        }
+        /* Mobile: single column, no offset */
+        @media (max-width: 767px) {
+          .work-grid {
+            grid-template-columns: 1fr;
+            gap: clamp(2.5rem, 6vw, 4rem);
+          }
+          .work-card-offset {
             margin-top: 0 !important;
           }
         }

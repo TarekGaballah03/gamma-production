@@ -167,6 +167,12 @@ export const projectSchema = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: "client",
+      title: "Client Name",
+      type: "string",
+      description: "The client this project was made for (optional)",
+    }),
+    defineField({
       name: "category",
       title: "Category",
       type: "string",
@@ -190,16 +196,6 @@ export const projectSchema = defineType({
       validation: (Rule) => Rule.required().min(2020).max(2030),
     }),
     defineField({
-      name: "coverImage",
-      title: "Cover Image",
-      type: "image",
-      options: { hotspot: true },
-      fields: [
-        { name: "alt", type: "string", title: "Alt Text", validation: (Rule) => Rule.required() },
-      ],
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
       name: "description",
       title: "Short Description",
       type: "text",
@@ -219,25 +215,58 @@ export const projectSchema = defineType({
       type: "string",
       options: {
         list: [
-          { title: "Image", value: "image" },
-          { title: "Video (YouTube / Vimeo)", value: "video" },
+          { title: "Image — single cover image", value: "image" },
+          { title: "Gallery — autoplay image slider", value: "gallery" },
+          { title: "Video — native HTML5 video (autoplay, muted, loop)", value: "video" },
         ],
         layout: "radio",
       },
       initialValue: "image",
-      description: "Choose whether this project displays an image or a video embed.",
+      description: "Controls what media is displayed for this project card.",
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "videoUrl",
-      title: "Video URL",
-      type: "url",
-      description: "YouTube or Vimeo URL (only used when Media Type is Video)",
+      name: "coverImage",
+      title: "Cover Image",
+      type: "image",
+      options: { hotspot: true },
+      fields: [
+        { name: "alt", type: "string", title: "Alt Text", validation: (Rule) => Rule.required() },
+      ],
+      description: "Used as the primary image and as a poster/fallback for video projects.",
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: "galleryImages",
+      title: "Gallery Images",
+      type: "array",
+      description: "Required when Media Type is 'Gallery'. Add images in display order.",
+      of: [
+        {
+          type: "image",
+          options: { hotspot: true },
+          fields: [
+            { name: "alt", type: "string", title: "Alt Text" },
+          ],
+        },
+      ],
+      hidden: ({ document }) => document?.mediaType !== "gallery",
+    }),
+    defineField({
+      name: "videoFile",
+      title: "Video File",
+      type: "file",
+      description: "Upload an mp4/webm video. Used when Media Type is 'Video'. The cover image will be used as poster.",
+      options: {
+        accept: "video/mp4,video/webm,video/quicktime",
+      },
+      hidden: ({ document }) => document?.mediaType !== "video",
     }),
     defineField({
       name: "featured",
       title: "Featured Project",
       type: "boolean",
-      description: "Featured projects appear first and larger in the grid",
+      description: "Featured projects appear first in the grid",
       initialValue: false,
     }),
     defineField({

@@ -40,6 +40,7 @@ export const workQuery = groq`
     _id,
     title,
     slug,
+    client,
     category,
     year,
     coverImage,
@@ -48,7 +49,14 @@ export const workQuery = groq`
     featured,
     order,
     mediaType,
-    videoUrl
+    galleryImages[] {
+      _type,
+      asset,
+      hotspot,
+      crop,
+      alt
+    },
+    "videoUrl": videoFile.asset->url
   }
 `;
 

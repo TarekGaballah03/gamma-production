@@ -1,7 +1,16 @@
-"use client";
+/**
+ * Main page — Server Component.
+ *
+ * All Sanity data is fetched server-side via Promise.all for optimal performance:
+ * - Content is in the initial HTML (better SEO, no loading flash)
+ * - Next.js ISR revalidation (1-hour default, configurable per query)
+ * - Preloader still works — it is a client component that mounts immediately
+ *
+ * Data falls back gracefully to built-in fallbacks in each section component
+ * if Sanity is unreachable.
+ */
 
-import { useState, useEffect } from "react";
-import { Preloader } from "@/components/layout/Preloader";
+import { Suspense } from "react";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { MarqueeSection } from "@/components/sections/MarqueeSection";
 import { AboutSection } from "@/components/sections/AboutSection";
@@ -10,77 +19,62 @@ import { WorkSection } from "@/components/sections/WorkSection";
 import { BehindTheSceneSection } from "@/components/sections/BehindTheSceneSection";
 import { ContactSection } from "@/components/sections/ContactSection";
 import { Footer } from "@/components/layout/Footer";
+import { PreloaderWrapper } from "@/components/layout/PreloaderWrapper";
 import type { HeroData, AboutData, ServicesData, Project, SiteSettings, BtsItem } from "@/types";
 import { sanityFetch } from "@/sanity/client";
 import { heroQuery, aboutQuery, servicesQuery, workQuery, settingsQuery, btsQuery } from "@/sanity/queries";
 
-export default function Home() {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<{
-    hero: HeroData | null;
-    about: AboutData | null;
-    services: ServicesData | null;
-    work: Project[];
-    settings: SiteSettings | null;
-    bts: BtsItem[];
-  }>({
-    hero: null,
-    about: null,
-    services: null,
-    work: [],
-    settings: null,
-    bts: [],
-  });
+// ISR: revalidate every 60 seconds
+export const revalidate = 60;
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [hero, about, services, work, settings, bts] = await Promise.all([
-          sanityFetch<HeroData>(heroQuery).catch(() => null),
-          sanityFetch<AboutData>(aboutQuery).catch(() => null),
-          sanityFetch<ServicesData>(servicesQuery).catch(() => null),
-          sanityFetch<Project[]>(workQuery).catch(() => []),
-          sanityFetch<SiteSettings>(settingsQuery).catch(() => null),
-          sanityFetch<BtsItem[]>(btsQuery).catch(() => []),
-        ]);
+async function getPageData() {
+  try {
+    const [hero, about, services, work, settings, bts] = await Promise.all([
+      sanityFetch<HeroData>(heroQuery).catch(() => null),
+      sanityFetch<AboutData>(aboutQuery).catch(() => null),
+      sanityFetch<ServicesData>(servicesQuery).catch(() => null),
+      sanityFetch<Project[]>(workQuery).catch(() => [] as Project[]),
+      sanityFetch<SiteSettings>(settingsQuery).catch(() => null),
+      sanityFetch<BtsItem[]>(btsQuery).catch(() => [] as BtsItem[]),
+    ]);
+    return { hero, about, services, work, settings, bts };
+  } catch {
+    return {
+      hero: null,
+      about: null,
+      services: null,
+      work: [] as Project[],
+      settings: null,
+      bts: [] as BtsItem[],
+    };
+  }
+}
 
-        setData({ hero, about, services, work, settings, bts });
-      } catch (err) {
-        console.error("Sanity fetch failed, using fallbacks.", err);
-      }
-    }
-    
-    loadData();
-  }, []);
+export default async function Home() {
+  const { hero, about, services, work, settings, bts } = await getPageData();
+
+  const displayProjects = work.length > 0 ? work : DUMMY_PROJECTS;
 
   return (
     <>
-      {loading && <Preloader onComplete={() => setLoading(false)} />}
-      
-      <main
-        style={{
-          visibility: loading ? "hidden" : "visible",
-          opacity: loading ? 0 : 1,
-          transition: "opacity 0.6s ease-in",
-        }}
-      >
-        <HeroSection data={data.hero} />
-        <MarqueeSection />
-        <AboutSection data={data.about} />
-        <ServicesSection data={data.services} />
-        
-        {/* We pass dummy projects if none exist to demonstrate the grid */}
-        <WorkSection projects={data.work.length > 0 ? data.work : DUMMY_PROJECTS} />
-        
-        <BehindTheSceneSection items={data.bts} />
+      {/* Preloader runs client-side — does not block server rendering */}
+      <PreloaderWrapper />
 
+      <main id="main-content">
+        <HeroSection data={hero} />
+        <MarqueeSection />
+        <AboutSection data={about} />
+        <ServicesSection data={services} />
+        <WorkSection projects={displayProjects} />
+        <BehindTheSceneSection items={bts} />
         <ContactSection />
-        <Footer settings={data.settings} />
+        <Footer settings={settings} />
       </main>
     </>
   );
 }
 
+// ─── Fallback project data (shown when Sanity has no projects yet) ──
 const DUMMY_PROJECTS: Project[] = [
   {
     _id: "1",
@@ -93,7 +87,7 @@ const DUMMY_PROJECTS: Project[] = [
     featured: true,
     order: 1,
     mediaType: "image",
-    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
+    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } },
   },
   {
     _id: "2",
@@ -106,7 +100,7 @@ const DUMMY_PROJECTS: Project[] = [
     featured: false,
     order: 2,
     mediaType: "image",
-    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
+    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } },
   },
   {
     _id: "3",
@@ -119,7 +113,7 @@ const DUMMY_PROJECTS: Project[] = [
     featured: false,
     order: 3,
     mediaType: "image",
-    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
+    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } },
   },
   {
     _id: "4",
@@ -132,6 +126,6 @@ const DUMMY_PROJECTS: Project[] = [
     featured: false,
     order: 4,
     mediaType: "image",
-    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } }
+    coverImage: { _type: "image", asset: { _ref: "", _type: "reference" } },
   },
 ];

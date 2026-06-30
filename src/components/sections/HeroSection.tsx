@@ -22,6 +22,12 @@ const FALLBACK: HeroData = {
 /**
  * Hero Section — kinetic typography with GSAP word-split reveal.
  * Full viewport height. Dark background.
+ *
+ * Mobile improvements:
+ * - Tighter bottom padding so CTA is visible without scrolling
+ * - Sub + CTA stack vertically on small screens
+ * - Smaller min font size for narrow viewports (iPhone SE)
+ * - Decorative elements hidden/reduced on mobile to reduce clutter
  */
 export function HeroSection({ data }: HeroSectionProps) {
   const d = data ?? FALLBACK;
@@ -104,18 +110,23 @@ export function HeroSection({ data }: HeroSectionProps) {
       "-=0.5"
     );
 
-    // Scroll parallax on headline
-    ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: "top top",
-      end: "bottom top",
-      scrub: 1,
-      onUpdate: (self) => {
-        const y = self.progress * 120;
-        const targets = [headlineTopRef.current, headlineBottomRef.current].filter(Boolean);
-        if (targets.length) gsap.set(targets, { y: -y });
-      },
+    // Scroll parallax on headline — disabled on mobile (reduces jank)
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 768px)", () => {
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: 1,
+        onUpdate: (self) => {
+          const y = self.progress * 120;
+          const targets = [headlineTopRef.current, headlineBottomRef.current].filter(Boolean);
+          if (targets.length) gsap.set(targets, { y: -y });
+        },
+      });
     });
+
+    return () => mm.revert();
   }, []);
 
   const topWords = splitWords(d.headlineTop);
@@ -125,27 +136,26 @@ export function HeroSection({ data }: HeroSectionProps) {
     <section
       id="home"
       ref={sectionRef}
-      className="section-dark"
+      className="section-dark hero-section"
       style={{
         minHeight: "100svh",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
-        padding: "0 clamp(1.5rem, 5vw, 5rem) clamp(3rem, 6vw, 5rem)",
+        padding: "0 clamp(1.25rem, 5vw, 5rem) clamp(2rem, 5vw, 5rem)",
         position: "relative",
         overflow: "hidden",
       }}
       aria-label="Hero"
     >
-      {/* Background grain is handled by global .grain class on body */}
-
-      {/* Decorative year */}
+      {/* Decorative year — hidden on mobile */}
       <span
         aria-hidden="true"
+        className="hero-year-label"
         style={{
           position: "absolute",
           top: "50%",
-          right: "clamp(1.5rem, 4vw, 4rem)",
+          right: "clamp(1.25rem, 4vw, 4rem)",
           transform: "translateY(-50%) rotate(90deg)",
           fontFamily: "DM Sans, sans-serif",
           fontSize: "0.65rem",
@@ -158,13 +168,14 @@ export function HeroSection({ data }: HeroSectionProps) {
         Est. 2023
       </span>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator — hidden on mobile */}
       <div
         aria-hidden="true"
+        className="hero-scroll-indicator"
         style={{
           position: "absolute",
-          bottom: "clamp(3rem, 6vw, 5rem)",
-          right: "clamp(1.5rem, 4vw, 4rem)",
+          bottom: "clamp(2rem, 5vw, 5rem)",
+          right: "clamp(1.25rem, 4vw, 4rem)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -187,6 +198,21 @@ export function HeroSection({ data }: HeroSectionProps) {
           50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
           100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
         }
+        /* Mobile: hide decorative elements that add noise */
+        @media (max-width: 640px) {
+          .hero-year-label,
+          .hero-scroll-indicator {
+            display: none !important;
+          }
+        }
+        /* Mobile: ensure sub+CTA stack vertically */
+        @media (max-width: 640px) {
+          .hero-bottom-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 1.5rem !important;
+          }
+        }
       `}</style>
 
       {/* Content */}
@@ -199,7 +225,7 @@ export function HeroSection({ data }: HeroSectionProps) {
             display: "flex",
             alignItems: "center",
             gap: "1rem",
-            marginBottom: "1.5rem",
+            marginBottom: "clamp(1rem, 2vw, 1.5rem)",
           }}
         >
           <div
@@ -229,21 +255,21 @@ export function HeroSection({ data }: HeroSectionProps) {
           <h1
             style={{
               fontFamily: "Cormorant Garamond, serif",
-              fontSize: "clamp(2.5rem, 10vw, 10rem)",
+              fontSize: "clamp(2.2rem, 10vw, 10rem)",
               fontWeight: 300,
               lineHeight: 1.05,
               letterSpacing: "-0.02em",
               color: "white",
               display: "flex",
               gap: "0.25em",
-              flexWrap: "wrap",
+              flexWrap: "nowrap",
             }}
           >
             {topWords.map((word, i) => (
               <span
                 key={i}
                 className="word"
-                style={{ display: "inline-block" }}
+                style={{ display: "inline-block", whiteSpace: "nowrap" }}
               >
                 {word}
               </span>
@@ -256,7 +282,7 @@ export function HeroSection({ data }: HeroSectionProps) {
           <p
             style={{
               fontFamily: "Cormorant Garamond, serif",
-              fontSize: "clamp(2.5rem, 10vw, 10rem)",
+              fontSize: "clamp(2.2rem, 10vw, 10rem)",
               fontWeight: 300,
               fontStyle: "italic",
               lineHeight: 1.05,
@@ -264,7 +290,7 @@ export function HeroSection({ data }: HeroSectionProps) {
               color: "white",
               display: "flex",
               gap: "0.25em",
-              flexWrap: "wrap",
+              flexWrap: "nowrap",
             }}
             aria-label={d.headlineBottom}
           >
@@ -272,7 +298,7 @@ export function HeroSection({ data }: HeroSectionProps) {
               <span
                 key={i}
                 className="word"
-                style={{ display: "inline-block" }}
+                style={{ display: "inline-block", whiteSpace: "nowrap" }}
               >
                 {word}
               </span>
@@ -283,15 +309,16 @@ export function HeroSection({ data }: HeroSectionProps) {
         {/* Accessible full headline for screen readers */}
         <h1 className="sr-only">{d.headlineTop} {d.headlineBottom}</h1>
 
-        {/* Sub + CTA row */}
+        {/* Sub + CTA row — stacks on mobile */}
         <div
+          className="hero-bottom-row"
           style={{
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "space-between",
-            marginTop: "clamp(2rem, 4vw, 3.5rem)",
+            marginTop: "clamp(1.5rem, 3.5vw, 3.5rem)",
             flexWrap: "wrap",
-            gap: "2rem",
+            gap: "1.5rem",
           }}
         >
           <p
@@ -299,7 +326,7 @@ export function HeroSection({ data }: HeroSectionProps) {
             style={{
               opacity: 0,
               fontFamily: "DM Sans, sans-serif",
-              fontSize: "clamp(0.875rem, 1.5vw, 1.1rem)",
+              fontSize: "clamp(0.85rem, 1.5vw, 1.1rem)",
               lineHeight: 1.7,
               color: "var(--color-grey-400)",
               maxWidth: "480px",
@@ -308,7 +335,7 @@ export function HeroSection({ data }: HeroSectionProps) {
             {d.subheadline}
           </p>
 
-          <div ref={ctaRef} style={{ opacity: 0 }}>
+          <div ref={ctaRef} style={{ opacity: 0, flexShrink: 0 }}>
             <Button href={d.ctaLink} variant="ghost">
               {d.ctaLabel}
             </Button>
