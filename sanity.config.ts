@@ -31,10 +31,7 @@ export default defineConfig({
               .child(S.document().schemaType("services").documentId("services")),
             S.divider(),
             S.documentTypeListItem("project").title("🎥 Projects"),
-            S.listItem()
-              .title("🎞 Behind the Scene")
-              .id("behindTheScene")
-              .child(S.document().schemaType("behindTheScene").documentId("behindTheScene")),
+            S.documentTypeListItem("bts").title("🎞 Behind the Scene").icon(() => "🎞"),
             S.divider(),
             S.listItem()
               .title("⚙️ Site Settings")

@@ -1,45 +1,88 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gsap } from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { RevealText } from "@/components/ui/RevealText";
-import type { BehindTheSceneData } from "@/types";
+import useEmblaCarousel from "embla-carousel-react";
+import type { BtsItem } from "@/types";
 
 interface BehindTheSceneSectionProps {
-  data: BehindTheSceneData | null;
+  items: BtsItem[];
 }
 
-/** Convert any YouTube / Vimeo watch URL to an embed URL */
-function toEmbedUrl(url: string): string {
-  const ytMatch = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+/**
+ * Renders a lazy-loading, auto-playing video element.
+ * Video only starts playing (and loads) when intersecting the viewport.
+ */
+function BtsVideoPlayer({ videoUrl, thumbnailUrl, title }: { videoUrl: string; thumbnailUrl?: string; title: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    
+    // Intersection Observer to lazy load the video
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setInView(true);
+            // Play video once in view
+            if (videoRef.current) {
+              videoRef.current.play().catch(() => {
+                // Ignore autoplay failures (some browsers block it until interaction)
+              });
+            }
+          } else {
+            // Pause video when out of view to save resources
+            if (videoRef.current) {
+              videoRef.current.pause();
+            }
+          }
+        });
+      },
+      { rootMargin: "200px" } // Start loading a bit before it enters the screen
+    );
+
+    observer.observe(videoRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={videoRef}
+      className="object-cover w-full h-full"
+      src={inView ? videoUrl : undefined}
+      poster={thumbnailUrl}
+      title={title}
+      autoPlay
+      muted
+      loop
+      playsInline
+      controls={false}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "block",
+        outline: "none",
+        border: "none",
+        borderRadius: "4px", // Rounded corners as requested
+      }}
+    />
   );
-  if (ytMatch) {
-    return `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
-  }
-  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
-  if (vimeoMatch) {
-    return `https://player.vimeo.com/video/${vimeoMatch[1]}?dnt=1`;
-  }
-  return url;
 }
 
-const FALLBACK: BehindTheSceneData = {
-  eyebrow: "Behind the Scene",
-  headline: "The Making Of",
-  subheadline: "Go behind the lens — explore the raw moments, creative process and energy that bring every production to life.",
-  videos: [],
-};
-
-export function BehindTheSceneSection({ data }: BehindTheSceneSectionProps) {
-  const d = data ?? FALLBACK;
+export function BehindTheSceneSection({ items }: BehindTheSceneSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const cardsRef   = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement>(null);
+  const [emblaRef] = useEmblaCarousel({ loop: true, align: "center", breakpoints: { "(min-width: 768px)": { active: false } } });
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
-    const cards = cardsRef.current?.querySelectorAll(".bts-card");
+    
+    // Only animate grid cards on desktop
+    const cards = cardsRef.current?.querySelectorAll(".bts-desktop-card");
     if (!cards?.length) return;
 
     cards.forEach((card, i) => {
@@ -60,7 +103,7 @@ export function BehindTheSceneSection({ data }: BehindTheSceneSectionProps) {
         }
       );
     });
-  }, [d.videos]);
+  }, [items]);
 
   return (
     <section
@@ -120,7 +163,7 @@ export function BehindTheSceneSection({ data }: BehindTheSceneSectionProps) {
               color: "var(--color-grey-400)",
             }}
           >
-            {d.eyebrow}
+            Behind the Scene
           </span>
           <div className="rule" style={{ width: "40px" }} />
         </div>
@@ -146,75 +189,38 @@ export function BehindTheSceneSection({ data }: BehindTheSceneSectionProps) {
                 color: "white",
               }}
             >
-              {d.headline}
+              The Making Of
             </span>
           </RevealText>
-
-          {d.subheadline && (
-            <RevealText tag="p" delay={0.2}>
-              <span
-                style={{
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: "clamp(0.9rem, 1.3vw, 1.05rem)",
-                  lineHeight: 1.7,
-                  color: "var(--color-grey-400)",
-                  maxWidth: "420px",
-                  display: "block",
-                }}
-              >
-                {d.subheadline}
-              </span>
-            </RevealText>
-          )}
         </div>
 
         {/* Divider */}
         <div className="rule" style={{ marginBottom: "clamp(3rem, 6vw, 5rem)" }} />
 
-        {/* Videos grid */}
-        {d.videos.length > 0 ? (
-          <div
-            ref={cardsRef}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 560px), 1fr))",
-              gap: "clamp(2.5rem, 4vw, 4rem)",
-            }}
-          >
-            {d.videos.map((video) => (
-              <div
-                key={video._key}
-                className="bts-card"
-                style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
-              >
-                {/* Video frame */}
-                <div
-                  style={{
-                    position: "relative",
-                    aspectRatio: "16/9",
-                    overflow: "hidden",
-                    borderRadius: "2px",
-                    background: "var(--color-grey-800)",
-                  }}
-                >
-                  <iframe
-                    src={toEmbedUrl(video.videoUrl)}
-                    title={video.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
+        {items.length > 0 ? (
+          <>
+            {/* Desktop Grid View */}
+            <div
+              ref={cardsRef}
+              className="hidden md:grid"
+              style={{
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 560px), 1fr))",
+                gap: "clamp(2.5rem, 4vw, 4rem)",
+              }}
+            >
+              {items.map((item) => (
+                <div key={item._id} className="bts-desktop-card" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                  <div
                     style={{
-                      position: "absolute",
-                      inset: 0,
-                      width: "100%",
-                      height: "100%",
-                      border: "none",
+                      position: "relative",
+                      aspectRatio: "16/9",
+                      background: "var(--color-grey-800)",
+                      borderRadius: "4px",
+                      overflow: "hidden",
                     }}
-                    loading="lazy"
-                  />
-                </div>
-
-                {/* Info */}
-                <div>
+                  >
+                    <BtsVideoPlayer videoUrl={item.videoUrl} thumbnailUrl={item.thumbnailUrl} title={item.title} />
+                  </div>
                   <h3
                     style={{
                       fontFamily: "Cormorant Garamond, serif",
@@ -222,29 +228,74 @@ export function BehindTheSceneSection({ data }: BehindTheSceneSectionProps) {
                       fontWeight: 400,
                       lineHeight: 1.2,
                       color: "white",
-                      marginBottom: video.description ? "0.5rem" : 0,
                     }}
                   >
-                    {video.title}
+                    {item.title}
                   </h3>
-                  {video.description && (
-                    <p
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile Embla Slider View */}
+            <div className="md:hidden">
+              <div className="embla" ref={emblaRef} style={{ overflow: "hidden" }}>
+                <div className="embla__container" style={{ display: "flex", touchAction: "pan-y" }}>
+                  {items.map((item) => (
+                    <div
+                      key={item._id}
+                      className="embla__slide"
                       style={{
-                        fontFamily: "DM Sans, sans-serif",
-                        fontSize: "0.875rem",
-                        lineHeight: 1.65,
-                        color: "var(--color-grey-400)",
+                        flex: "0 0 90%", // Show 90% of a slide so the next one peeks
+                        minWidth: 0,
+                        paddingRight: "1rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "1rem",
                       }}
                     >
-                      {video.description}
-                    </p>
-                  )}
+                      <div
+                        style={{
+                          position: "relative",
+                          aspectRatio: "16/9",
+                          background: "var(--color-grey-800)",
+                          borderRadius: "4px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <BtsVideoPlayer videoUrl={item.videoUrl} thumbnailUrl={item.thumbnailUrl} title={item.title} />
+                      </div>
+                      <h3
+                        style={{
+                          fontFamily: "Cormorant Garamond, serif",
+                          fontSize: "1.5rem",
+                          fontWeight: 400,
+                          lineHeight: 1.2,
+                          color: "white",
+                        }}
+                      >
+                        {item.title}
+                      </h3>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+              <div
+                style={{
+                  marginTop: "1.5rem",
+                  textAlign: "center",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.15em",
+                  color: "var(--color-grey-600)",
+                  textTransform: "uppercase"
+                }}
+              >
+                Swipe to view more
+              </div>
+            </div>
+          </>
         ) : (
-          /* Empty state — shown until content is added in Sanity */
+          /* Empty state */
           <div
             style={{
               display: "grid",
@@ -253,12 +304,12 @@ export function BehindTheSceneSection({ data }: BehindTheSceneSectionProps) {
             }}
           >
             {[0, 1].map((i) => (
-              <div key={i} className="bts-card" style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div key={i} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div
                   style={{
                     aspectRatio: "16/9",
                     background: "var(--color-grey-800)",
-                    borderRadius: "2px",
+                    borderRadius: "4px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -273,27 +324,8 @@ export function BehindTheSceneSection({ data }: BehindTheSceneSectionProps) {
                       color: "var(--color-grey-600)",
                     }}
                   >
-                    Add videos in Sanity Studio
+                    Upload videos in Sanity Studio
                   </span>
-                </div>
-                <div>
-                  <div
-                    style={{
-                      height: "1.5rem",
-                      width: i === 0 ? "60%" : "45%",
-                      background: "var(--color-grey-800)",
-                      borderRadius: "2px",
-                      marginBottom: "0.5rem",
-                    }}
-                  />
-                  <div
-                    style={{
-                      height: "0.875rem",
-                      width: "80%",
-                      background: "var(--color-grey-800)",
-                      borderRadius: "2px",
-                    }}
-                  />
                 </div>
               </div>
             ))}

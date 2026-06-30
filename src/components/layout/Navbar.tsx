@@ -28,57 +28,21 @@ function scrollToSection(href: string, onDone?: () => void) {
   });
 }
 
-// ─── Logo mark SVG (inline for crisp blend-mode rendering) ──────
+// ─── Logo Image ──────────────────────────────────────────────────
 function GammaLogo({ size = 36 }: { size?: number }) {
   return (
-    <svg
-      viewBox="0 0 120 145"
-      width={size}
-      height={size * 1.2}
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Stylised lowercase g */}
-      <text
-        x="-4"
-        y="118"
-        fontFamily="Cormorant Garamond, Georgia, serif"
-        fontSize="128"
-        fontWeight="300"
-        fill="currentColor"
-      >
-        g
-      </text>
-      {/* Grape cluster — three dots */}
-      <circle cx="96" cy="30" r="6.5" fill="currentColor" />
-      <circle cx="108" cy="18" r="5"   fill="currentColor" />
-      <circle cx="105" cy="34" r="5"   fill="currentColor" />
-    </svg>
+    <img
+      src="/logo.PNG"
+      alt="Gamma Production Logo"
+      width={size * 1.5}
+      style={{
+        objectFit: "contain",
+        display: "block"
+      }}
+    />
   );
 }
 
-// ─── Wordmark beside the logo mark ─────────────────────────────
-function GammaWordmark() {
-  return (
-    <span
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        lineHeight: 1.1,
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-        fontSize: "0.6rem",
-        fontFamily: "DM Sans, sans-serif",
-        fontWeight: 400,
-        color: "currentColor",
-      }}
-    >
-      <span>Gamma</span>
-      <span style={{ opacity: 0.6 }}>Production</span>
-    </span>
-  );
-}
 
 export function Navbar() {
   const navRef       = useRef<HTMLElement>(null);
@@ -233,8 +197,7 @@ export function Navbar() {
           }}
           className="hover:opacity-70"
         >
-          <GammaLogo size={32} />
-          <GammaWordmark />
+          <GammaLogo size={42} />
         </Link>
 
         {/* ── Desktop nav ─────────────────────────────────────── */}

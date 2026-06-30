@@ -10,9 +10,9 @@ import { WorkSection } from "@/components/sections/WorkSection";
 import { BehindTheSceneSection } from "@/components/sections/BehindTheSceneSection";
 import { ContactSection } from "@/components/sections/ContactSection";
 import { Footer } from "@/components/layout/Footer";
-import type { HeroData, AboutData, ServicesData, Project, SiteSettings, BehindTheSceneData } from "@/types";
+import type { HeroData, AboutData, ServicesData, Project, SiteSettings, BtsItem } from "@/types";
 import { sanityFetch } from "@/sanity/client";
-import { heroQuery, aboutQuery, servicesQuery, workQuery, settingsQuery, behindTheSceneQuery } from "@/sanity/queries";
+import { heroQuery, aboutQuery, servicesQuery, workQuery, settingsQuery, btsQuery } from "@/sanity/queries";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -22,29 +22,29 @@ export default function Home() {
     services: ServicesData | null;
     work: Project[];
     settings: SiteSettings | null;
-    behindTheScene: BehindTheSceneData | null;
+    bts: BtsItem[];
   }>({
     hero: null,
     about: null,
     services: null,
     work: [],
     settings: null,
-    behindTheScene: null,
+    bts: [],
   });
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [hero, about, services, work, settings, behindTheScene] = await Promise.all([
+        const [hero, about, services, work, settings, bts] = await Promise.all([
           sanityFetch<HeroData>(heroQuery).catch(() => null),
           sanityFetch<AboutData>(aboutQuery).catch(() => null),
           sanityFetch<ServicesData>(servicesQuery).catch(() => null),
           sanityFetch<Project[]>(workQuery).catch(() => []),
           sanityFetch<SiteSettings>(settingsQuery).catch(() => null),
-          sanityFetch<BehindTheSceneData>(behindTheSceneQuery).catch(() => null),
+          sanityFetch<BtsItem[]>(btsQuery).catch(() => []),
         ]);
 
-        setData({ hero, about, services, work, settings, behindTheScene });
+        setData({ hero, about, services, work, settings, bts });
       } catch (err) {
         console.error("Sanity fetch failed, using fallbacks.", err);
       }
@@ -72,7 +72,7 @@ export default function Home() {
         {/* We pass dummy projects if none exist to demonstrate the grid */}
         <WorkSection projects={data.work.length > 0 ? data.work : DUMMY_PROJECTS} />
         
-        <BehindTheSceneSection data={data.behindTheScene} />
+        <BehindTheSceneSection items={data.bts} />
 
         <ContactSection />
         <Footer settings={data.settings} />

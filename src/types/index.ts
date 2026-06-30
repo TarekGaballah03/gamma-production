@@ -105,19 +105,12 @@ export type Project = {
   videoUrl?: string;
 };
 
-export type BtsVideo = {
-  _key: string;
+export type BtsItem = {
+  _id: string;
   title: string;
-  description?: string;
   videoUrl: string;
-  thumbnail?: SanityImage;
-};
-
-export type BehindTheSceneData = {
-  eyebrow: string;
-  headline: string;
-  subheadline?: string;
-  videos: BtsVideo[];
+  thumbnailUrl?: string;
+  order: number;
 };
 
 export type SiteSettings = {

@@ -65,17 +65,12 @@ export const settingsQuery = groq`
   }
 `;
 
-export const behindTheSceneQuery = groq`
-  *[_type == "behindTheScene"][0] {
-    eyebrow,
-    headline,
-    subheadline,
-    videos[] {
-      _key,
-      title,
-      description,
-      videoUrl,
-      thumbnail
-    }
+export const btsQuery = groq`
+  *[_type == "bts"] | order(order asc) {
+    _id,
+    title,
+    "videoUrl": videoFile.asset->url,
+    "thumbnailUrl": thumbnail.asset->url,
+    order
   }
 `;

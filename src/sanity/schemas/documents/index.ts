@@ -331,79 +331,46 @@ export const settingsSchema = defineType({
   },
 });
 
-export const behindTheSceneSchema = defineType({
-  name: "behindTheScene",
-  title: "Behind the Scene",
+export const btsSchema = defineType({
+  name: "bts",
+  title: "Behind the Scene Video",
   type: "document",
   icon: () => "🎞",
   fields: [
     defineField({
-      name: "eyebrow",
-      title: "Eyebrow Label",
+      name: "title",
+      title: "Video Title",
       type: "string",
-      initialValue: "Behind the Scene",
-    }),
-    defineField({
-      name: "headline",
-      title: "Section Headline",
-      type: "string",
-      initialValue: "The Making Of",
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "subheadline",
-      title: "Sub-headline / Description",
-      type: "text",
-      rows: 3,
-      description: "A short description shown below the headline",
+      name: "videoFile",
+      title: "Video File",
+      type: "file",
+      options: {
+        accept: "video/mp4,video/quicktime,video/webm",
+      },
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: "videos",
-      title: "BTS Videos",
-      type: "array",
-      of: [
-        {
-          type: "object",
-          name: "btsVideo",
-          fields: [
-            {
-              name: "title",
-              type: "string",
-              title: "Video Title",
-              validation: (Rule: any) => Rule.required(),
-            },
-            {
-              name: "description",
-              type: "text",
-              title: "Short Description",
-              rows: 2,
-            },
-            {
-              name: "videoUrl",
-              type: "url",
-              title: "YouTube / Vimeo URL",
-              description: "e.g. https://www.youtube.com/watch?v=XXXX",
-              validation: (Rule: any) => Rule.required(),
-            },
-            {
-              name: "thumbnail",
-              type: "image",
-              title: "Thumbnail (optional override)",
-              options: { hotspot: true },
-              fields: [
-                { name: "alt", type: "string", title: "Alt Text" },
-              ],
-            },
-          ],
-          preview: {
-            select: { title: "title", subtitle: "videoUrl" },
-          },
-        },
-      ],
-      validation: (Rule) => Rule.min(1),
+      name: "thumbnail",
+      title: "Thumbnail (optional)",
+      type: "image",
+      options: { hotspot: true },
+      description: "Fallback image shown before video loads.",
+    }),
+    defineField({
+      name: "order",
+      title: "Display Order",
+      type: "number",
+      initialValue: 0,
+      validation: (Rule) => Rule.required(),
     }),
   ],
   preview: {
-    select: { title: "headline" },
+    select: {
+      title: "title",
+      media: "thumbnail",
+    },
   },
 });

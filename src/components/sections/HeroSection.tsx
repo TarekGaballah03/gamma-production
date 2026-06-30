@@ -229,9 +229,9 @@ export function HeroSection({ data }: HeroSectionProps) {
           <h1
             style={{
               fontFamily: "Cormorant Garamond, serif",
-              fontSize: "clamp(3.5rem, 9vw, 10rem)",
+              fontSize: "clamp(2.5rem, 10vw, 10rem)",
               fontWeight: 300,
-              lineHeight: 1,
+              lineHeight: 1.05,
               letterSpacing: "-0.02em",
               color: "white",
               display: "flex",
@@ -256,10 +256,10 @@ export function HeroSection({ data }: HeroSectionProps) {
           <p
             style={{
               fontFamily: "Cormorant Garamond, serif",
-              fontSize: "clamp(3.5rem, 9vw, 10rem)",
+              fontSize: "clamp(2.5rem, 10vw, 10rem)",
               fontWeight: 300,
               fontStyle: "italic",
-              lineHeight: 1,
+              lineHeight: 1.05,
               letterSpacing: "-0.02em",
               color: "white",
               display: "flex",

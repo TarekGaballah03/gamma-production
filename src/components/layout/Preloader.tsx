@@ -13,7 +13,7 @@ interface PreloaderProps {
  */
 export function Preloader({ onComplete }: PreloaderProps) {
   const preloaderRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<SVGSVGElement>(null);
+  const logoRef = useRef<HTMLImageElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState(0);
@@ -77,32 +77,15 @@ export function Preloader({ onComplete }: PreloaderProps) {
       {/* Sliding panel */}
       <div ref={panelRef} className="absolute inset-0 bg-[#0a0a0a] z-10 flex items-center justify-center flex-col">
         {/* Logo SVG */}
-        <svg
+        <img
           ref={logoRef}
-          viewBox="0 0 200 220"
+          src="/logo.PNG"
+          alt="Gamma Production Logo"
           width="120"
           height="130"
           aria-hidden="true"
-          style={{ opacity: 0 }}
-          fill="white"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Stylized 'g' letterform */}
-          <text
-            x="10"
-            y="170"
-            fontFamily="Cormorant Garamond, Georgia, serif"
-            fontSize="180"
-            fontWeight="400"
-            fill="white"
-          >
-            g
-          </text>
-          {/* Grape cluster dots */}
-          <circle cx="148" cy="68" r="7" fill="white" />
-          <circle cx="162" cy="56" r="5.5" fill="white" />
-          <circle cx="158" cy="72" r="5.5" fill="white" />
-        </svg>
+          style={{ opacity: 0, objectFit: "contain" }}
+        />
 
         {/* Counter */}
         <div className="preloader-counter" aria-live="polite">

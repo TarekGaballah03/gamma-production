@@ -42,28 +42,13 @@ export function Footer({ settings }: FooterProps) {
         >
           {/* Brand */}
           <div>
-            <svg
-              viewBox="0 0 80 90"
+            <img
+              src="/logo.PNG"
+              alt="Gamma Production Logo"
               width="48"
               height="58"
-              aria-hidden="true"
-              fill="#0a0a0a"
-              style={{ marginBottom: "1rem" }}
-            >
-              <text
-                x="0"
-                y="76"
-                fontFamily="Cormorant Garamond, Georgia, serif"
-                fontSize="80"
-                fontWeight="400"
-                fill="#0a0a0a"
-              >
-                g
-              </text>
-              <circle cx="63" cy="23" r="4" fill="#0a0a0a" />
-              <circle cx="71" cy="15" r="3" fill="#0a0a0a" />
-              <circle cx="69" cy="27" r="3" fill="#0a0a0a" />
-            </svg>
+              style={{ marginBottom: "1rem", objectFit: "contain", filter: "invert(1)" }}
+            />
             <p
               style={{
                 fontFamily: "DM Sans, sans-serif",

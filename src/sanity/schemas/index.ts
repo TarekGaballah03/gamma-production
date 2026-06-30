@@ -4,7 +4,7 @@ import {
   servicesSchema,
   projectSchema,
   settingsSchema,
-  behindTheSceneSchema,
+  btsSchema,
 } from "./documents";
 import { seoObject, socialLinkObject, ctaButtonObject } from "./objects";
 
@@ -19,5 +19,5 @@ export const schemaTypes = [
   servicesSchema,
   projectSchema,
   settingsSchema,
-  behindTheSceneSchema,
+  btsSchema,
 ];
