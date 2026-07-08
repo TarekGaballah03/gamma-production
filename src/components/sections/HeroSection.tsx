@@ -204,6 +204,12 @@ export function HeroSection({ data }: HeroSectionProps) {
           .hero-scroll-indicator {
             display: none !important;
           }
+          /* Reduce the huge empty black gap — use auto height + top padding */
+          .hero-section {
+            min-height: unset !important;
+            padding-top: clamp(6rem, 20vw, 8rem) !important;
+            justify-content: flex-start !important;
+          }
         }
         /* Mobile: ensure sub+CTA stack vertically */
         @media (max-width: 640px) {

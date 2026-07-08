@@ -46,12 +46,12 @@ export function Preloader({ onComplete }: PreloaderProps) {
       },
     });
 
-    // Logo fade in
+    // Logo: starts tiny and grows in sync with the counter
     tl.fromTo(
       logo,
-      { opacity: 0, scale: 0.85 },
-      { opacity: 1, scale: 1, duration: 0.8, ease: "power3.out" },
-      "-=1.5"
+      { opacity: 0, scale: 0.15 },
+      { opacity: 1, scale: 1, duration: 1.8, ease: "power2.inOut" },
+      "<"
     );
 
     // Hold briefly, then wipe out
