@@ -46,23 +46,35 @@ export function Preloader({ onComplete }: PreloaderProps) {
       },
     });
 
-    // Logo: starts tiny and grows in sync with the counter
+    // Logo: starts tiny and grows continuously during loading
     tl.fromTo(
       logo,
-      { opacity: 0, scale: 0.15 },
+      { opacity: 0, scale: 0.12 },
       { opacity: 1, scale: 1, duration: 1.8, ease: "power2.inOut" },
       "<"
     );
 
-    // Hold briefly, then wipe out
-    tl.to({}, { duration: 0.3 });
+    // Brief hold at 100%
+    tl.to({}, { duration: 0.15 });
 
-    // Split-panel exit: top and bottom panels slide away
-    tl.to(panel, {
-      yPercent: -100,
-      duration: 0.9,
-      ease: "power4.inOut",
+    // Logo explodes: keeps scaling up massively and fades out
+    tl.to(logo, {
+      scale: 8,
+      opacity: 0,
+      duration: 0.7,
+      ease: "power3.in",
     });
+
+    // Panel wipes away (overlaps slightly with logo explosion)
+    tl.to(
+      panel,
+      {
+        yPercent: -100,
+        duration: 0.9,
+        ease: "power4.inOut",
+      },
+      "-=0.35"
+    );
 
     tl.set(preloader, { display: "none" });
 
