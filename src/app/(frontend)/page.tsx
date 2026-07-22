@@ -64,8 +64,8 @@ export default async function Home() {
         <HeroSection data={hero} />
         <MarqueeSection />
         <AboutSection data={about} />
-        <ServicesSection data={services} />
         <WorkSection projects={displayProjects} />
+        <ServicesSection data={services} />
         <BehindTheSceneSection items={bts} />
         <ContactSection />
         <Footer settings={settings} />

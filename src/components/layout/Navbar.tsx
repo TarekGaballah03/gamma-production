@@ -8,8 +8,8 @@ import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
 const NAV_LINKS = [
   { href: "#about",    label: "About",    shortLabel: "About",    num: "01" },
-  { href: "#services", label: "Services", shortLabel: "Services", num: "02" },
-  { href: "#work",     label: "Work",     shortLabel: "Work",     num: "03" },
+  { href: "#work",     label: "Work",     shortLabel: "Work",     num: "02" },
+  { href: "#services", label: "Services", shortLabel: "Services", num: "03" },
   { href: "#behind",   label: "Behind the Scene", shortLabel: "BTS", num: "04" },
   { href: "#contact",  label: "Contact",  shortLabel: "Contact",  num: "05" },
 ];
